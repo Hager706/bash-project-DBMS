@@ -1,30 +1,30 @@
 #!/bin/bash
 #######################################Validation Functions for DBMS##########################################################################
 validate_name() {
-    local name="$1"
+    local name="$1"  #not global just loacal
     
     # Check if name is empty
-    if [ -z "$name" ]; then
-        echo "Error: Name cannot be empty!"
+    if [ -z "$name" ]; then    #are name is empty?
+        echo $RED "❌Error: Name cannot be empty!"
         return 1
     fi
     
     # Check if name starts with a number
     if [[ "$name" =~ ^[0-9] ]]; then
-        echo "Error: Name cannot start with a number!"
+        echo $RED "❌Error: Name cannot start with a number!"
         return 1
     fi
     
     # Check for special characters and spaces (only letters, numbers, and underscores allowed)
     if [[ ! "$name" =~ ^[a-zA-Z][a-zA-Z0-9_]*$ ]]; then
-        echo "Error: Name can only contain letters, numbers, and underscores!"
+        echo $RED "❌Error: Name can only contain letters, numbers, and underscores!"
         echo "       It must start with a letter."
         return 1
     fi
     
     # Check length 
     if [ ${#name} -gt 30 ]; then
-        echo "Error: Name is too long! Maximum 30 characters allowed."
+        echo $RED "❌Error: Name is too long! Maximum 30 characters allowed."
         return 1
     fi
     
@@ -35,7 +35,7 @@ validate_database_exists() {
     local db_name="$1"
     
     if [ ! -d "$db_name" ]; then
-        echo "Error: Database '$db_name' does not exist!"
+        echo $RED"❌Error: Database '$db_name' does not exist!"
         return 1
     fi
     
@@ -47,7 +47,7 @@ validate_table_exists() {
     local table_name="$1"
     
     if [ ! -f "${table_name}.meta" ]; then
-        echo "Error: Table '$table_name' does not exist!"
+        echo $RED"❌Error: Table '$table_name' does not exist!"
         return 1
     fi
     
@@ -58,7 +58,7 @@ validate_data_type() {
     local data_type="$1"
     
     if [ "$data_type" != "Integer" ] && [ "$data_type" != "String" ]; then
-        echo "Error: Data type must be 'Integer' or 'String'!"
+        echo $RED"❌Error: Data type must be 'Integer' or 'String'!"
         return 1
     fi
     
@@ -69,7 +69,7 @@ validate_integer() {
     local value="$1"
     
     if ! [[ "$value" =~ ^-?[0-9]+$ ]]; then
-        echo "Error: '$value' is not a valid integer!"
+        echo $RED"❌Error: '$value' is not a valid integer!"
         return 1
     fi
     
@@ -81,13 +81,13 @@ validate_string() {
     
     # Check if string is empty
     if [ -z "$value" ]; then
-        echo "Error: String cannot be empty!"
+        echo $RED"❌Error: String cannot be empty!"
         return 1
     fi
     
     # Check for reasonable length
     if [ ${#value} -gt 100 ]; then
-        echo "Error: String is too long! Maximum 100 characters allowed."
+        echo $RED"❌Error: String is too long! Maximum 100 characters allowed."
         return 1
     fi
     
@@ -114,7 +114,7 @@ get_valid_input() {
             echo "$input"
             return 0
         fi
-        echo "Please try again."
+        echo $RED"Please try again."
         echo ""
     done
 }
