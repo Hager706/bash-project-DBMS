@@ -1,6 +1,6 @@
 #!/bin/bash
 #######################################Validation Functions for DBMS##########################################################################
-validate_name() {
+validate_name() {.
     local name="$1"  #not global just loacal
     
     # Check if name is empty
@@ -185,3 +185,30 @@ validate_primary_key_unique() {
     
     return 0
 }
+
+###########################################ask yes or no ######################################################################
+ask_yes_no() {
+    local question="$1"
+    while true; do
+        echo -n "$question (Y/n): " 
+        read answer
+        if [[ -z "$answer" ]]; then
+            return 0   # Default to yes
+        fi
+
+        case "$answer" in
+            [Yy]|[Yy][Ee][Ss])
+                return 0 
+                ;;
+            [Nn]|[Nn][Oo])
+                return 1  
+                ;;
+            *)
+                echo "❌ Invalid input. Please enter 'y' or 'n'."
+                ;;
+        esac
+    done
+}
+
+if ask_yes_no "Do you want to continue?"; then
+ask_yes_or_no "Do you want to continue?" "Y"
