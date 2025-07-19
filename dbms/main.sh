@@ -1,9 +1,8 @@
 #!/bin/bash
 # variables
-DBMS_HOME="$HOME/dbms_data"  # Main folder for all databases
-export DBMS_HOME="$HOME/dbms_data"
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"  #want the pwd of script
+DBMS_HOME="$SCRIPT_DIR/dbms_data"  # Main folder for all databases
+export DBMS_HOME="$SCRIPT_DIR/dbms_data"
 # Source other script files
 source "$SCRIPT_DIR/validation.sh"
 source "$SCRIPT_DIR/menu.sh"
