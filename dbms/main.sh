@@ -39,11 +39,12 @@ initialize_dbms() {
 main() {
     echo "Starting Database Management System..."
     
-    # Initialize the DBMS
     initialize_dbms
     
-    # Start the main menu
+while true 
+do
     show_main_menu
+done
 }
 
 # Start the program

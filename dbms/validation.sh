@@ -28,6 +28,10 @@ validate_name() {
         return 1
     fi
     
+    if [[ "$name" =~ [[:space:]] ]]; then
+        print_message $RED "✗ Database name cannot contain spaces"
+        return 1
+    fi
     return 0
 }
 ###########################################Function to validate if a database exists######################################################################
@@ -42,12 +46,32 @@ validate_database_exists() {
     return 0
 }
 
+validate_database_unique() {
+    local db_name="$1"
+    
+    if [ -d "$db_name" ]; then
+        echo $RED"❌Error: Database '$db_name' already exists!"
+        return 1
+    fi
+    
+    return 0
+}
 ###########################################Function to validate if a table exists######################################################################
 validate_table_exists() {
     local table_name="$1"
     
     if [ ! -f "${table_name}.meta" ]; then
         echo $RED"❌Error: Table '$table_name' does not exist!"
+        return 1
+    fi
+    
+    return 0
+}
+validate_table_unique() {
+    local table_name="$1"
+    
+    if [ -f "${table_name}.meta" ]; then
+        echo $RED"❌Error: Table '$table_name' already exists!"
         return 1
     fi
     
@@ -73,6 +97,16 @@ validate_integer() {
         return 1
     fi
     
+    return 0
+}
+validate_positive_integer() {
+    local value="$1"
+
+    if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
+        echo $RED"❌ Error: '$value' is not a positive integer!"
+        return 1
+    fi
+
     return 0
 }
 ###########################################Function to validate string input (basic validation)######################################################################
@@ -124,4 +158,30 @@ pause_for_user() {
     echo -n "Press Enter to continue..."
     read
     echo ""
+}
+
+###########################################Function to get valid unique######################################################################
+
+validate_column_unique() {
+    local table_name="$1"
+    local column_name="$2"
+    
+    if [ -f "${table_name}.meta" ] && grep -q "^$column_name:" "${table_name}.meta"; then
+        echo $RED"❌Error: Column '$column_name' already exists in table '$table_name'!"
+        return 1
+    fi
+    
+    return 0
+}
+
+validate_primary_key_unique() {
+    local table_name="$1"
+    local pk_value="$2"
+    
+    if [ -f "${table_name}.data" ] && grep -q "^$pk_value:" "${table_name}.data"; then
+        echo $RED"❌Error: Primary key '$pk_value' already exists in table '$table_name'!"
+        return 1
+    fi
+    
+    return 0
 }
