@@ -5,31 +5,31 @@ validate_name() {
     
     # Check if name is empty
     if [ -z "$name" ]; then    #are name is empty?
-        echo $RED "❌Error: Name cannot be empty!"
+        print_message $RED "❌ Error: Name cannot be empty!"
         return 1
     fi
     
     # Check if name starts with a number
     if [[ "$name" =~ ^[0-9] ]]; then
-        echo $RED "❌Error: Name cannot start with a number!"
+        print_message $RED "❌ Error: Name cannot start with a number!"
         return 1
     fi
     
     # Check for special characters and spaces (only letters, numbers, and underscores allowed)
     if [[ ! "$name" =~ ^[a-zA-Z][a-zA-Z0-9_]*$ ]]; then
-        echo $RED "❌Error: Name can only contain letters, numbers, and underscores!"
+        print_message $RED "❌ Error: Name can only contain letters, numbers, and underscores!"
         echo "       It must start with a letter."
         return 1
     fi
     
     # Check length 
     if [ ${#name} -gt 30 ]; then
-        echo $RED "❌Error: Name is too long! Maximum 30 characters allowed."
+        print_message $RED "❌ Error: Name is too long! Maximum 30 characters allowed."
         return 1
     fi
     
     if [[ "$name" =~ [[:space:]] ]]; then
-        print_message $RED "✗ Database name cannot contain spaces"
+        print_message $RED "❌ Error: Database name cannot contain spaces"
         return 1
     fi
     return 0
@@ -39,7 +39,7 @@ validate_database_exists() {
     local db_name="$1"
     
     if [ ! -d "$db_name" ]; then
-        echo $RED"❌Error: Database '$db_name' does not exist!"
+        print_message $RED "❌ Error: Database '$db_name' does not exist!"
         return 1
     fi
     
@@ -50,7 +50,7 @@ validate_database_unique() {
     local db_name="$1"
     
     if [ -d "$db_name" ]; then
-        echo $RED"❌Error: Database '$db_name' already exists!"
+         print_message $RED "✗Error: Database '$db_name' already exists!"
         return 1
     fi
     
@@ -61,7 +61,7 @@ validate_table_exists() {
     local table_name="$1"
     
     if [ ! -f "${table_name}.meta" ]; then
-        echo $RED"❌Error: Table '$table_name' does not exist!"
+       print_message $RED "❌ Error: Table '$table_name' does not exist!"
         return 1
     fi
     
@@ -82,7 +82,7 @@ validate_data_type() {
     local data_type="$1"
     
     if [ "$data_type" != "Integer" ] && [ "$data_type" != "String" ]; then
-        echo $RED"❌Error: Data type must be 'Integer' or 'String'!"
+        print_message $RED "❌ Error: Data type must be 'Integer' or 'String'!"
         return 1
     fi
     
@@ -93,7 +93,7 @@ validate_integer() {
     local value="$1"
     
     if ! [[ "$value" =~ ^-?[0-9]+$ ]]; then
-        echo $RED"❌Error: '$value' is not a valid integer!"
+        print_message $RED "❌ Error: '$value' is not a valid integer!"
         return 1
     fi
     
@@ -103,7 +103,7 @@ validate_positive_integer() {
     local value="$1"
 
     if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
-        echo $RED"❌ Error: '$value' is not a positive integer!"
+        print_message $RED "❌ Error: '$value' is not a positive integer!"
         return 1
     fi
 
@@ -115,13 +115,13 @@ validate_string() {
     
     # Check if string is empty
     if [ -z "$value" ]; then
-        echo $RED"❌Error: String cannot be empty!"
+        print_message $RED "❌ Error: String cannot be empty!"
         return 1
     fi
     
     # Check for reasonable length
     if [ ${#value} -gt 100 ]; then
-        echo $RED"❌Error: String is too long! Maximum 100 characters allowed."
+        print_message $RED "❌ Error: String is too long! Maximum 100 characters allowed."
         return 1
     fi
     
@@ -148,7 +148,7 @@ get_valid_input() {
             echo "$input"
             return 0
         fi
-        echo $RED"Please try again."
+        print_message $RED "Please try again."
         echo ""
     done
 }
@@ -167,7 +167,7 @@ validate_column_unique() {
     local column_name="$2"
     
     if [ -f "${table_name}.meta" ] && grep -q "^$column_name:" "${table_name}.meta"; then
-        echo $RED"❌Error: Column '$column_name' already exists in table '$table_name'!"
+        print_message $RED "❌ Error: Column '$column_name' already exists in table '$table_name'!"
         return 1
     fi
     
@@ -179,7 +179,7 @@ validate_primary_key_unique() {
     local pk_value="$2"
     
     if [ -f "${table_name}.data" ] && grep -q "^$pk_value:" "${table_name}.data"; then
-        echo $RED"❌Error: Primary key '$pk_value' already exists in table '$table_name'!"
+        print_message $RED "❌ Error: Primary key '$pk_value' already exists in table '$table_name'!"
         return 1
     fi
     
