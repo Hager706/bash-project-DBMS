@@ -1,8 +1,7 @@
 show_main_menu() {
 print_message $BLUE "*** DBMS Main Menu ***"
     local db_name="$1"
-
-       PS3="Select an option (1-5): "
+       PS3="Select an option (1-4): "
 select choice in "Create Database" "Connect to Database" "List Databases" "Drop Database" "Exit"
 do
       case $choice in
@@ -16,7 +15,7 @@ do
                   ;;
             "List Databases")
             list_databases
-                  break
+                 continue
                   ;;
             "Drop Database")
             echo "Drop Database feature - Coming in Step 3!"
@@ -27,7 +26,7 @@ do
                   exit 0
                   ;;
             *)
-            print_message $RED"❌ Invalid option. Please select 1-5."
+            print_message $RED"❌ Invalid option. Please select 1-4."
             echo
                   continue
                   ;;
@@ -58,7 +57,6 @@ create_database() {
             print_message $GREEN "✓ Location: $DBMS_HOME/$db_name"
             echo
             
-            # Ask if user wants to connect to the new database
             echo -n "Would you like to connect to this database now? (y/n): "
             read connect_choice
             if [[ "$connect_choice" =~ ^[Yy]([Ee][Ss])?$ ]]; then
@@ -76,6 +74,50 @@ create_database() {
 done
 }
 
-list_databases() {}
+list_databases() {
+    if [ -z "$(ls -A "$DBMS_HOME" 2>/dev/null)" ]; then
+        print_message $RED "No databases found!"
+        echo -n "Do you want to create a database? (y/n): "
+        read create_choice
+
+        if [[ "$create_choice" =~ ^[Yy]([Ee][Ss])?$ ]]; then
+            create_database
+        fi
+    else
+	
+	print_message $GREEN "Existing databases:"
+
+	var=($(ls -A "$DBMS_HOME"))
+
+	for (( i = 0; i < ${#var[@]}; i++ ))
+	do
+    	print_message $GREEN "$((i+1)). ${var[$i]}"
+	done
+	echo
+
+      if ask_yes_no "Would you like to connect to a database now?"
+      then
+      echo -n "Enter the number of the database to connect: "
+      read number 
+        if validate_positive_integer $number
+	  then
+		number_in_arr=$((number-1)) 
+		if [ "$number_in_arr" -ge 0 ] && [ "$number_in_arr" -lt ${#var[@]} ]
+		then
+			selected_db="${var[$index]}" 
+			print_message $BLUE "Connecting to database '$selected_db'..."
+			connect_to_database "$selected_db"
+		else
+			print_message $RED "❌ Invalid number! Please choose a number from the list."
+		fi
+        fi 
+      else  
+    print_message $YELLOW "Returning to main menu..."
+    show_main_menu
+      fi
+
+    fi
+}
+
 connect_to_database() {}
 drop_database() {}
