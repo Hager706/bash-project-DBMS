@@ -103,7 +103,7 @@ validate_positive_integer() {
     local value="$1"
 
     if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
-        print_message $RED "❌ Error: '$value' is not a positive integer!"
+        print_message $RED "❌ Error: '$value' is not a valid !"
         return 1
     fi
 
@@ -210,5 +210,5 @@ ask_yes_no() {
     done
 }
 
-if ask_yes_no "Do you want to continue?"; then
-ask_yes_or_no "Do you want to continue?" "Y"
+# if ask_yes_no "Do you want to continue?"; then
+# ask_yes_or_no "Do you want to continue?" "Y"

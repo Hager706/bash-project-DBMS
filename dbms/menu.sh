@@ -77,47 +77,101 @@ done
 list_databases() {
     if [ -z "$(ls -A "$DBMS_HOME" 2>/dev/null)" ]; then
         print_message $RED "No databases found!"
-        echo -n "Do you want to create a database? (y/n): "
-        read create_choice
-
-        if [[ "$create_choice" =~ ^[Yy]([Ee][Ss])?$ ]]; then
+        if ask_yes_no "Do you want to create a database?"
+        then
             create_database
+        else
+            print_message $YELLOW "Returning to main menu..."
+            show_main_menu
         fi
     else
-	
-	print_message $GREEN "Existing databases:"
 
-	var=($(ls -A "$DBMS_HOME"))
+        var=($(ls -A "$DBMS_HOME"))
+        print_message $GREEN "Found ${#var[@]} databases:"
 
-	for (( i = 0; i < ${#var[@]}; i++ ))
-	do
-    	print_message $GREEN "$((i+1)). ${var[$i]}"
-	done
-	echo
 
-      if ask_yes_no "Would you like to connect to a database now?"
-      then
-      echo -n "Enter the number of the database to connect: "
-      read number 
-        if validate_positive_integer $number
-	  then
-		number_in_arr=$((number-1)) 
-		if [ "$number_in_arr" -ge 0 ] && [ "$number_in_arr" -lt ${#var[@]} ]
-		then
-			selected_db="${var[$index]}" 
-			print_message $BLUE "Connecting to database '$selected_db'..."
-			connect_to_database "$selected_db"
-		else
-			print_message $RED "❌ Invalid number! Please choose a number from the list."
-		fi
-        fi 
-      else  
-    print_message $YELLOW "Returning to main menu..."
-    show_main_menu
-      fi
+        for (( i = 0; i < ${#var[@]}; i++ ))
+        do
+            print_message $GREEN "$((i+1)). ${var[$i]}"
+        done
+        echo
 
+        if ask_yes_no "Would you like to connect to a database now?"
+        then
+            while true; do
+                echo -n "Enter the number of the database to connect: "
+                read number
+
+                if validate_positive_integer "$number"; then
+                    number_in_arr=$((number - 1))
+                    if [ "$number_in_arr" -ge 0 ] && [ "$number_in_arr" -lt ${#var[@]} ]; then
+                        selected_db="${var[$number_in_arr]}"
+                        print_message $BLUE "Connecting to database '$selected_db'..."
+                        connect_to_database "$selected_db"
+                        break
+                    else
+                        print_message $RED "❌ Invalid number! Please choose a number from the list."
+                    fi
+                else
+                    print_message $RED "❌ Please enter a valid positive number."
+                fi
+            done
+        else
+            print_message $YELLOW "Returning to main menu..."
+            show_main_menu
+        fi
     fi
 }
 
-connect_to_database() {}
+
+connect_to_database() {
+
+      connect_to_database() {
+ if [ -z "$(ls -A "$DBMS_HOME" 2>/dev/null)" ]; then
+        print_message $RED "No databases found!"
+        if ask_yes_no "Do you want to create a database?"
+        then
+            create_database
+        else
+            print_message $YELLOW "Returning to main menu..."
+            show_main_menu
+        fi
+    else
+
+        var=($(ls -A "$DBMS_HOME"))
+        print_message $GREEN "Avilable databases: ${#var[@]}"
+
+
+        for (( i = 0; i < ${#var[@]}; i++ ))
+        do
+            print_message $GREEN "$((i+1)). ${var[$i]}"
+        done
+        echo
+
+	while true; do
+                echo -n "Enter the number of the database to connect: "
+                read number
+
+                if validate_positive_integer "$number"; then
+                    number_in_arr=$((number - 1))
+                    if [ "$number_in_arr" -ge 0 ] && [ "$number_in_arr" -lt ${#var[@]} ]; then
+                        selected_db="${var[$number_in_arr]}"
+			
+                        cd "$selected_db"
+			echo ""
+                        print_message $BLUE "Connecting to database '$selected_db'..."
+			echo ""
+                        source "$SCRIPT_DIR/database_menu.sh"
+			show_database_menu "$selected_db"
+			cd ..
+
+                    else
+                        print_message $RED "❌ Invalid number! Please choose a number from the list."
+                    fi
+                fi
+            done
+fi
+}
+
+}
 drop_database() {}
