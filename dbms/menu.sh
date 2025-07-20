@@ -1,7 +1,7 @@
 show_main_menu() {
 while true; do
 print_message $BLUE "*** DBMS Main Menu ***"
-    #local db_name="$1"
+    local db_name="$1"
        PS3="Select an option (1-5): "
 select choice in "Create Database" "Connect to Database" "List Databases" "Drop Database" "Exit"
 do
@@ -16,14 +16,13 @@ do
                   ;;
             "List Databases")
             list_databases
-                 continue
+                  break ;;
                   ;;
             "Drop Database")
- 
-		drop_database                
-		 continue
+	     	drop_database                
+	    	  break ;;
                   ;;
-              "exit" )
+              "Exit"))
            print_message $GREEN "Goodbye! Thank you for using our DBMS."
                   exit 0
                   ;;
@@ -163,9 +162,9 @@ connect_to_database() {
 			echo ""
                         print_message $BLUE "Connecting to database '$selected_db'..."
 			echo ""
-                        source "$SCRIPT_DIR/database_menu.sh"
-			show_database_menu "$selected_db"
-			cd ..
+                        source "$SCRIPT_DIR/DBmenu.sh"
+			            #show_database_menu "$selected_db"
+			     #       cd ..
 
                     else
                         print_message $RED "❌ Invalid number! Please choose a number from the list."

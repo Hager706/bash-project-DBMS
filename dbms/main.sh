@@ -6,7 +6,7 @@ export DBMS_HOME="$SCRIPT_DIR/dbms_data"
 # Source other script files
 source "$SCRIPT_DIR/validation.sh"
 source "$SCRIPT_DIR/menu.sh"
-# source "$SCRIPT_DIR/database_menu.sh"
+# source "$SCRIPT_DIR/DBmenu.sh"
 # source "$SCRIPT_DIR/table_operations.sh"
 # source "$SCRIPT_DIR/data_operations.sh"
 # Color 

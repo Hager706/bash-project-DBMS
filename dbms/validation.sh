@@ -79,14 +79,60 @@ validate_table_unique() {
 }
 ###########################################Function to validate data type######################################################################
 validate_data_type() {
-    local data_type="$1"
+local datatype="$1"
+    case "$datatype" in
+        "Integer"|"integer"|"int"|"INT")
+            echo "Integer"
+            return 0
+            ;;
+        "String"|"string"|"str"|"STR"|"VARCHAR"|"varchar")
+            echo "String"
+            return 0
+            ;;
+        "BOOLEAN"|"boolean"|"BOOL"|"bool")
+            echo "Boolean"
+            return 0
+            ;;
+        *)
+            print_message $RED "❌ Invalid data type "
+            return 1
+            ;;
+    esac
+}
+validate_column_value() {
+    local value="$1"
+    local datatype="$2"
     
-    if [ "$data_type" != "Integer" ] && [ "$data_type" != "String" ]; then
-        print_message $RED "❌ Error: Data type must be 'Integer' or 'String'!"
-        return 1
-    fi
-    
-    return 0
+    case "$datatype" in
+        "Integer")
+            if [[ "$value" =~ ^-?[0-9]+$ ]]; then
+                return 0
+            else
+                print_message $RED "❌ '$value' is not a valid integer!"
+                return 1
+            fi
+            ;;
+        "String")
+            if [ -n "$value" ]; then
+                return 0
+            else
+                print_message $RED "❌ String value cannot be empty!"
+                return 1
+            fi
+            ;;
+        "Boolean")
+            if [[ "$value" == "true" || "$value" == "false" ]]; then
+                return 0
+            else
+                print_message $RED "❌ '$value' is not a valid boolean value!"
+                return 1
+            fi
+            ;;
+        *)
+            print_message $RED "❌ Unknown data type: $datatype"
+            return 1
+            ;;
+    esac
 }
 ###########################################Function to validate integer input######################################################################
 validate_integer() {
