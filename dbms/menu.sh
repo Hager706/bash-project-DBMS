@@ -1,7 +1,8 @@
 show_main_menu() {
+while true; do
 print_message $BLUE "*** DBMS Main Menu ***"
     local db_name="$1"
-       PS3="Select an option (1-4): "
+       PS3="Select an option (1-5): "
 select choice in "Create Database" "Connect to Database" "List Databases" "Drop Database" "Exit"
 do
       case $choice in
@@ -18,21 +19,23 @@ do
                  continue
                   ;;
             "Drop Database")
-            echo "Drop Database feature - Coming in Step 3!"
-                  break
+ 
+		drop_database                
+		 continue
                   ;;
-            "Exit")
-            echo "Goodbye! Thank you for using our DBMS."
+              "exit" )
+           print_message $GREEN "Goodbye! Thank you for using our DBMS."
                   exit 0
                   ;;
             *)
-            print_message $RED"❌ Invalid option. Please select 1-4."
+            print_message $RED"❌ Invalid option. Please select 1-5."
             echo
                   continue
                   ;;
             esac
+           
         done
- 
+ done
 
 }
 create_database() {
@@ -56,12 +59,12 @@ create_database() {
             print_message $GREEN "✓ Database '$db_name' created successfully!"
             print_message $GREEN "✓ Location: $DBMS_HOME/$db_name"
             echo
-            
-            echo -n "Would you like to connect to this database now? (y/n): "
-            read connect_choice
-            if [[ "$connect_choice" =~ ^[Yy]([Ee][Ss])?$ ]]; then
+            if ask_yes_no "Would you like to connect to this database now?"
+            then
                 print_message $YELLOW "Connecting to database '$db_name'..."
-                print_message $YELLOW "Database connection functionality will be implemented next..."
+		connect_to_database
+	    else
+                 show_main_menu
             fi
                echo
                return
@@ -124,9 +127,8 @@ list_databases() {
 }
 
 
-connect_to_database() {
 
-      connect_to_database() {
+connect_to_database() {
  if [ -z "$(ls -A "$DBMS_HOME" 2>/dev/null)" ]; then
         print_message $RED "No databases found!"
         if ask_yes_no "Do you want to create a database?"
@@ -173,5 +175,69 @@ connect_to_database() {
 fi
 }
 
+drop_database() {
+
+if [ -z "$(ls -A "$DBMS_HOME" 2>/dev/null)" ]; then
+        print_message $RED "No databases found!"
+        if ask_yes_no "Do you want to create a database?"
+        then
+            create_database
+        else
+		echo
+            print_message $YELLOW "Returning to main menu..."
+		echo
+		show_main_menu
+        fi
+    else
+
+        var=($(ls -A "$DBMS_HOME"))
+        print_message $GREEN "Avilable databases: ${#var[@]}"
+
+
+        for (( i = 0; i < ${#var[@]}; i++ ))
+        do
+            print_message $GREEN "$((i+1)). ${var[$i]}"
+        done
+        echo
+
+	while true; do
+                echo -n "Enter the number of the database to drop (or 'back' to return): "
+                read number
+		if [ "$number" = "back" ]; then
+			echo           	
+		 print_message $YELLOW "Returning to main menu..."
+                     echo
+            	  show_main_menu
+       		fi
+
+                if validate_positive_integer "$number"; then
+                    number_in_arr=$((number - 1))
+                    if [ "$number_in_arr" -ge 0 ] && [ "$number_in_arr" -lt ${#var[@]} ]; then
+                        selected_db="${var[$number_in_arr]}"
+			
+                       
+                       echo ""    
+                      print_message $YELLOW "⚠️  WARNING: This will permanently delete database '$selected_db' and all its tables!"
+                      if ask_yes_no "Are you sure? (type 'yes' to confirm): "
+                      then
+                        echo ""
+                        rm -rf "$DBMS_HOME/$selected_db"
+				 if [ $? -eq 0 ]; then
+                        print_message $GREEN "Database '$selected_db' dropped successfully!"
+					show_main_menu
+				 else 
+			   print_message $RED "❌ Failed to delete database '$selected_db'"
+				fi
+		      else
+                                    print_message $RED "❌ Operation cancelled."
+                                    echo
+                      fi
+                      return
+                    else
+                        print_message $RED "❌ Invalid number! Please choose a number from the list."
+                    fi
+                fi
+            done
+fi
+    
 }
-drop_database() {}

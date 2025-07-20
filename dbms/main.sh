@@ -20,13 +20,14 @@ print_message() {
     local message=$2
     echo -e "${color}${message}${NC}"
 }
+
 initialize_dbms() {
 print_message $GREEN "╔══════════════════════════════╗"
 print_message $GREEN "║     DBMS Initialization      ║"
 print_message $GREEN "╚══════════════════════════════╝"    
    if [ ! -d "$DBMS_HOME" ]; then
         echo "First time running Simple DBMS ;)"
-        print_message $GREEN "✓ Created main databases directory: $DBMS_DIR"
+        print_message $GREEN "✓ Created main databases directory: $DBMS_HOME"
         mkdir -p "$DBMS_HOME"
         print_message $GREEN "✓ Database system initialized successfully!"
         echo ""
