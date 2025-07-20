@@ -1,7 +1,7 @@
 show_main_menu() {
 while true; do
 print_message $BLUE "*** DBMS Main Menu ***"
-    local db_name="$1"
+    #local db_name="$1"
        PS3="Select an option (1-5): "
 select choice in "Create Database" "Connect to Database" "List Databases" "Drop Database" "Exit"
 do
@@ -159,7 +159,7 @@ connect_to_database() {
                     if [ "$number_in_arr" -ge 0 ] && [ "$number_in_arr" -lt ${#var[@]} ]; then
                         selected_db="${var[$number_in_arr]}"
 			
-                        cd "$selected_db"
+                        cd "$DBMS_HOME/$selected_db"
 			echo ""
                         print_message $BLUE "Connecting to database '$selected_db'..."
 			echo ""
@@ -176,7 +176,6 @@ fi
 }
 
 drop_database() {
-
 if [ -z "$(ls -A "$DBMS_HOME" 2>/dev/null)" ]; then
         print_message $RED "No databases found!"
         if ask_yes_no "Do you want to create a database?"
