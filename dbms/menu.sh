@@ -16,13 +16,14 @@ do
                   ;;
             "List Databases")
             list_databases
-                  break ;;
+                 continue
                   ;;
             "Drop Database")
-	     	drop_database                
-	    	  break ;;
+ 
+		drop_database                
+		 continue
                   ;;
-              "Exit"))
+              "exit" )
            print_message $GREEN "Goodbye! Thank you for using our DBMS."
                   exit 0
                   ;;
@@ -162,9 +163,10 @@ connect_to_database() {
 			echo ""
                         print_message $BLUE "Connecting to database '$selected_db'..."
 			echo ""
-                        source "$SCRIPT_DIR/DBmenu.sh"
-			            #show_database_menu "$selected_db"
-			     #       cd ..
+                        #source "$SCRIPT_DIR/DBmenu.sh"
+			DBmenu $selected_db
+			#show_database_menu "$selected_db"
+			#cd ..
 
                     else
                         print_message $RED "❌ Invalid number! Please choose a number from the list."
@@ -175,6 +177,7 @@ fi
 }
 
 drop_database() {
+
 if [ -z "$(ls -A "$DBMS_HOME" 2>/dev/null)" ]; then
         print_message $RED "No databases found!"
         if ask_yes_no "Do you want to create a database?"
@@ -239,3 +242,4 @@ if [ -z "$(ls -A "$DBMS_HOME" 2>/dev/null)" ]; then
 fi
     
 }
+

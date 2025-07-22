@@ -1,6 +1,6 @@
 #!/bin/bash
 #######################################Validation Functions for DBMS##########################################################################
-validate_name() {.
+validate_name() {
     local name="$1"  #not global just loacal
     
     # Check if name is empty
@@ -50,7 +50,7 @@ validate_database_unique() {
     local db_name="$1"
     
     if [ -d "$db_name" ]; then
-         print_message $RED "✗Error: Database '$db_name' already exists!"
+         print_message $RED "❌ Error: Database '$db_name' already exists!"
         return 1
     fi
     
@@ -71,34 +71,13 @@ validate_table_unique() {
     local table_name="$1"
     
     if [ -f "${table_name}.meta" ]; then
-        echo $RED"❌Error: Table '$table_name' already exists!"
+        echo $RED"❌ Error: Table '$table_name' already exists!"
         return 1
     fi
     
     return 0
 }
 ###########################################Function to validate data type######################################################################
-validate_data_type() {
-local datatype="$1"
-    case "$datatype" in
-        "Integer"|"integer"|"int"|"INT")
-            echo "Integer"
-            return 0
-            ;;
-        "String"|"string"|"str"|"STR"|"VARCHAR"|"varchar")
-            echo "String"
-            return 0
-            ;;
-        "BOOLEAN"|"boolean"|"BOOL"|"bool")
-            echo "Boolean"
-            return 0
-            ;;
-        *)
-            print_message $RED "❌ Invalid data type "
-            return 1
-            ;;
-    esac
-}
 validate_column_value() {
     local value="$1"
     local datatype="$2"
@@ -134,6 +113,27 @@ validate_column_value() {
             ;;
     esac
 }
+validate_data_type() {
+local datatype="$1"
+    case "$datatype" in
+        "Integer"|"integer"|"int"|"INT")
+            echo "Integer"
+            return 0
+            ;;
+        "String"|"string"|"str"|"STR"|"VARCHAR"|"varchar")
+            echo "String"
+            return 0
+            ;;
+        "BOOLEAN"|"boolean"|"BOOL"|"bool")
+            echo "Boolean"
+            return 0
+            ;;
+        *)
+            print_message $RED "❌ Invalid data type "
+            return 1
+            ;;
+    esac
+}
 ###########################################Function to validate integer input######################################################################
 validate_integer() {
     local value="$1"
@@ -149,7 +149,7 @@ validate_positive_integer() {
     local value="$1"
 
     if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
-        print_message $RED "❌ Error: '$value' is not a valid !"
+        print_message $RED "❌ Error: '$value' is not a valid!"
         return 1
     fi
 
@@ -232,6 +232,7 @@ validate_primary_key_unique() {
     return 0
 }
 
+
 ###########################################ask yes or no ######################################################################
 ask_yes_no() {
     local question="$1"
@@ -250,11 +251,9 @@ ask_yes_no() {
                 return 1  
                 ;;
             *)
-                echo "❌ Invalid input. Please enter 'y' or 'n'."
+                print_message $RED "❌ Invalid input. Please enter 'y' or 'n'."
                 ;;
         esac
     done
 }
 
-# if ask_yes_no "Do you want to continue?"; then
-# ask_yes_or_no "Do you want to continue?" "Y"
