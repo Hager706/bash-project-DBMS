@@ -1,34 +1,29 @@
 #!/bin/bash
 #######################################Validation Functions for DBMS##########################################################################
 validate_name() {
-    local name="$1"  #not global just loacal
     
-    # Check if name is empty
-    if [ -z "$name" ]; then    #are name is empty?
+    if [ -z "$1" ]; then  
         print_message $RED "❌ Error: Name cannot be empty!"
         return 1
     fi
     
-    # Check if name starts with a number
-    if [[ "$name" =~ ^[0-9] ]]; then
+    if [[ "$1" =~ ^[0-9] ]]; then
         print_message $RED "❌ Error: Name cannot start with a number!"
         return 1
     fi
     
-    # Check for special characters and spaces (only letters, numbers, and underscores allowed)
-    if [[ ! "$name" =~ ^[a-zA-Z][a-zA-Z0-9_]*$ ]]; then
+    if [[ ! "$1" =~ ^[a-zA-Z][a-zA-Z0-9_]*$ ]]; then
         print_message $RED "❌ Error: Name can only contain letters, numbers, and underscores!"
         echo "       It must start with a letter."
         return 1
     fi
     
-    # Check length 
-    if [ ${#name} -gt 30 ]; then
+    if [ ${#1} -gt 30 ]; then
         print_message $RED "❌ Error: Name is too long! Maximum 30 characters allowed."
         return 1
     fi
     
-    if [[ "$name" =~ [[:space:]] ]]; then
+    if [[ "$1" =~ [[:space:]] ]]; then
         print_message $RED "❌ Error: Database name cannot contain spaces"
         return 1
     fi
@@ -36,10 +31,9 @@ validate_name() {
 }
 ###########################################Function to validate if a database exists######################################################################
 validate_database_exists() {
-    local db_name="$1"
     
-    if [ ! -d "$db_name" ]; then
-        print_message $RED "❌ Error: Database '$db_name' does not exist!"
+    if [ ! -d "$1" ]; then
+        print_message $RED "❌ Error: Database '$1' does not exist!"
         return 1
     fi
     
@@ -47,10 +41,9 @@ validate_database_exists() {
 }
 
 validate_database_unique() {
-    local db_name="$1"
     
-    if [ -d "$db_name" ]; then
-         print_message $RED "❌ Error: Database '$db_name' already exists!"
+    if [ -d "$1" ]; then
+         print_message $RED "❌ Error: Database '$1' already exists!"
         return 1
     fi
     
@@ -58,20 +51,18 @@ validate_database_unique() {
 }
 ###########################################Function to validate if a table exists######################################################################
 validate_table_exists() {
-    local table_name="$1"
     
-    if [ ! -f "${table_name}.meta" ]; then
-       print_message $RED "❌ Error: Table '$table_name' does not exist!"
+    if [ ! -f "${1}.meta" ]; then
+       print_message $RED "❌ Error: Table '$1' does not exist!"
         return 1
     fi
     
     return 0
 }
 validate_table_unique() {
-    local table_name="$1"
     
-    if [ -f "${table_name}.meta" ]; then
-        echo $RED"❌ Error: Table '$table_name' already exists!"
+    if [ -f "${1}.meta" ]; then
+        echo $RED"❌ Error: Table '$1' already exists!"
         return 1
     fi
     
@@ -79,12 +70,11 @@ validate_table_unique() {
 }
 ###########################################Function to validate data type######################################################################
 validate_column_value() {
-    local value="$1"
-    local datatype="$2"
-    
-    case "$datatype" in
+    #1>>> value
+    #2>>> datatype
+    case "$2" in
         "Integer")
-            if [[ "$value" =~ ^-?[0-9]+$ ]]; then
+            if [[ "$1" =~ ^-?[0-9]+$ ]]; then
                 return 0
             else
                 print_message $RED "❌ '$value' is not a valid integer!"
@@ -92,7 +82,7 @@ validate_column_value() {
             fi
             ;;
         "String")
-            if [ -n "$value" ]; then
+            if [ -n "$1" ]; then
                 return 0
             else
                 print_message $RED "❌ String value cannot be empty!"
@@ -100,22 +90,21 @@ validate_column_value() {
             fi
             ;;
         "Boolean")
-            if [[ "$value" == "true" || "$value" == "false" ]]; then
+            if [[ "$1" == "true" || "$1" == "false" ]]; then
                 return 0
             else
-                print_message $RED "❌ '$value' is not a valid boolean value!"
+                print_message $RED "❌ '$1' is not a valid boolean value!"
                 return 1
             fi
             ;;
         *)
-            print_message $RED "❌ Unknown data type: $datatype"
+            print_message $RED "❌ Unknown data type: $2"
             return 1
             ;;
     esac
 }
 validate_data_type() {
-local datatype="$1"
-    case "$datatype" in
+    case "$1" in
         "Integer"|"integer"|"int"|"INT")
             echo "Integer"
             return 0
@@ -135,38 +124,32 @@ local datatype="$1"
     esac
 }
 ###########################################Function to validate integer input######################################################################
-validate_integer() {
-    local value="$1"
+validate_integer() {  
     
-    if ! [[ "$value" =~ ^-?[0-9]+$ ]]; then
-        print_message $RED "❌ Error: '$value' is not a valid integer!"
+    if ! [[ "$1" =~ ^-?[0-9]+$ ]]; then
+        print_message $RED "❌ Error: '$1' is not a valid integer!"
         return 1
     fi
     
     return 0
 }
 validate_positive_integer() {
-    local value="$1"
 
-    if ! [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
-        print_message $RED "❌ Error: '$value' is not a valid!"
+    if ! [[ "$1" =~ ^[1-9][0-9]*$ ]]; then
+        print_message $RED "❌ Error: '$1' is not a valid!"
         return 1
     fi
 
     return 0
 }
 ###########################################Function to validate string input (basic validation)######################################################################
-validate_string() {
-    local value="$1"
-    
-    # Check if string is empty
-    if [ -z "$value" ]; then
+validate_string() {    
+    if [ -z "$1" ]; then
         print_message $RED "❌ Error: String cannot be empty!"
         return 1
     fi
-    
-    # Check for reasonable length
-    if [ ${#value} -gt 100 ]; then
+
+    if [ ${#1} -gt 100 ]; then
         print_message $RED "❌ Error: String is too long! Maximum 100 characters allowed."
         return 1
     fi
@@ -209,11 +192,11 @@ pause_for_user() {
 ###########################################Function to get valid unique######################################################################
 
 validate_column_unique() {
-    local table_name="$1"
-    local column_name="$2"
-    
-    if [ -f "${table_name}.meta" ] && grep -q "^$column_name:" "${table_name}.meta"; then
-        print_message $RED "❌ Error: Column '$column_name' already exists in table '$table_name'!"
+    #1>>> table name
+    #2>>> column name
+    if [ -f "${1}.meta" ] && cut -d: -f1 "${1}.meta" | grep -qx "$2"
+    then
+        print_message $RED "❌ Error: Column '$2' already exists in table '$1'!"
         return 1
     fi
     
@@ -221,11 +204,13 @@ validate_column_unique() {
 }
 
 validate_primary_key_unique() {
-    local table_name="$1"
-    local pk_value="$2"
+    #1>>> table name
+    #2>>> pk
+    #local pk_value="$2"
     
-    if [ -f "${table_name}.data" ] && grep -q "^$pk_value:" "${table_name}.data"; then
-        print_message $RED "❌ Error: Primary key '$pk_value' already exists in table '$table_name'!"
+    if [ -f "${1}.data" ] && cut -d: -f1 "${1}.data" | grep -qx "$2"
+    then
+        print_message $RED "❌ Error: Primary key '$2' already exists in table '$1'!"
         return 1
     fi
     
