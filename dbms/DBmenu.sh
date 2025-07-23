@@ -205,6 +205,7 @@ show_created_table_structure() {
 ##############################################################################
 list_tables() {
 local found=0
+
     #cd "$DBMS_HOME/$1" || return
     print_message $BLUE "Tables in Database: $1"
     echo
@@ -239,6 +240,7 @@ local found=0
 drop_table() {
 local found=0
 local count=1
+local table_names=()
 for file in *.meta
 do
 
@@ -250,9 +252,9 @@ do
             fi
             found=1
             table_name="${file%.meta}"
-            
-             print_message $GREEN "$count. $table_name"
-             ((count++))
+            table_names+=("$table_name")
+            print_message $GREEN "$count. $table_name"
+            ((count++))
         fi
        
 done
@@ -286,7 +288,7 @@ do
             continue
         fi 
 
-        if  [ "$number" -eq 0 ] || [ "$number" -gt "$count" ]
+        if [ "$number" -lt 1 ] || [ "$number" -gt $((count - 1)) ]
         then 
            print_message $RED "❌ Invalid table number"
            echo ""
@@ -300,7 +302,7 @@ do
     echo
 
 
-    table_name=$(ls | sed -n "${number}p")
+    table_name="${table_names[$((number-1))]}"
     if ask_yes_no "Are you sure you want to drop table '$table_name'?"
     then
             if [ -f "$DBMS_HOME/$db_name/${table_name}.meta" ]
@@ -323,5 +325,6 @@ do
 ##########################################################################
 
 insert_into_table() {
-    
+
+
 }
