@@ -224,9 +224,9 @@ ask_yes_no() {
     while true; do
         echo -n "$question (Y/n): " 
         read answer
-        if [[ -z "$answer" ]]; then
-            return 0   # Default to yes
-        fi
+        # if [[ -z "$answer" ]]; then
+        #     return 0   # Default to yes
+        # fi
 
         case "$answer" in
             [Yy]|[Yy][Ee][Ss])

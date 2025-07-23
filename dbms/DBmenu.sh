@@ -238,42 +238,86 @@ local found=0
 ##############################################################################
 drop_table() {
 local found=0
-local count=0
-
+local count=1
 for file in *.meta
 do
-if [ -f "$file" ]
+
+        if [ -f "$file" ]
         then
+           if [ $found -eq 0 ]; then
+            print_message $GREEN "Available tables:"
+            echo ""
+            fi
             found=1
             table_name="${file%.meta}"
-             print_message $GREEN "$((count+1)). $table_name"
-             count=$((count+1))
+            
+             print_message $GREEN "$count. $table_name"
+             ((count++))
         fi
        
-    done
+done
 
     if [ $found -eq 0 ]
     then
+        echo ""
         print_message $RED "❌ No tables found "
+        echo " "
+        if ask_yes_no "Do you want to create a table?" 
+        then
+            create_table "$1"
+            echo ""
+            return
+        fi
+        DBmenu $1
+        return
     fi
     echo 
 
-    while true
-    do 
-        echo -n "Enter the number of the table to drop: "
+while true
+do 
+        echo -n "Enter the number of the table to drop:(or 'back' to return): "
         read number
-
+        if [ "$number" = "back" ]; then
+            return
+        fi
         if ! validate_positive_integer "$number"
         then
             echo ""
             continue
         fi 
-            number_in_arr=$((number - 1))
-        if [ "$number_in_arr" -ge 0 ] && [ "$number_in_arr" -lt $count ]; then
-                selected_table="${var[$number_in_arr]}"
-                break
-        fi
+
+        if  [ "$number" -eq 0 ] || [ "$number" -gt "$count" ]
+        then 
+           print_message $RED "❌ Invalid table number"
+           echo ""
+           continue
+        fi 
+         
+        break
     done
+    show_created_table_structure "$table_name"
+    print_message $RED "⚠️  WARNING: This action will permanently delete the table and ALL its data!"
+    echo
+
+
+    table_name=$(ls | sed -n "${number}p")
+    if ask_yes_no "Are you sure you want to drop table '$table_name'?"
+    then
+            if [ -f "$DBMS_HOME/$db_name/${table_name}.meta" ]
+            then
+                rm "$DBMS_HOME/$db_name/${table_name}.meta"
+                print_message $GREEN "✓ Removed metadata file: ${table_name}.meta"
+            fi
+            if [ -f "$DBMS_HOME/$db_name/${table_name}.data" ]; then
+                rm "$DBMS_HOME/$db_name/${table_name}.data"
+                print_message $GREEN "✓ Removed data file: ${table_name}.data"
+            fi
+            print_message $GREEN "✓ Table '$table_name' dropped successfully!"
+
+    else
+        print_message $YELLOW "Drop operation cancelled."
+        echo
+    fi
 }
 
 ##########################################################################
