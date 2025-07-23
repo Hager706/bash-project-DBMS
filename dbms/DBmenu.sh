@@ -240,7 +240,8 @@ local found=0
 drop_table() {
 local found=0
 local count=1
-local table_names=()
+declare -a table_names=()
+print_message $BLUE "Drop Tables in Database: $1"
 for file in *.meta
 do
 
@@ -248,7 +249,7 @@ do
         then
            if [ $found -eq 0 ]; then
             print_message $GREEN "Available tables:"
-            echo ""
+        
             fi
             found=1
             table_name="${file%.meta}"
@@ -325,6 +326,159 @@ do
 ##########################################################################
 
 insert_into_table() {
+print_message $BLUE "Insert Data in Tables in Database: $1"
+local found=0
+local count=1
+declare -a table_names=()
+declare -a columns
+declare -a data_types
+declare -a constraints
+declare -a values
+for file in *.meta
+do
+        if [ -f "$file" ]
+        then
+           if [ $found -eq 0 ]; then
+            print_message $GREEN "Available tables:"
+        
+            fi
+            found=1
+            table_name="${file%.meta}"
+            table_names+=("$table_name")
+            print_message $GREEN "$count. $table_name"
+            ((count++))
+        fi
+       
+done
+
+    if [ $found -eq 0 ]
+    then
+        echo ""
+        print_message $RED "❌ No tables found "
+        echo " "
+        if ask_yes_no "Do you want to create a table?" 
+        then
+            create_table "$1"
+            echo ""
+            return
+        fi
+        DBmenu $1
+        return
+    fi
+    echo 
+
+while true
+do 
+        echo -n "Enter the number of the table to insert into:(or 'back' to return): "
+        read number
+        if [ "$number" = "back" ]; then
+            return
+        fi
+        if ! validate_positive_integer "$number"
+        then
+            echo ""
+            continue
+        fi 
+
+        if [ "$number" -lt 1 ] || [ "$number" -gt $((count - 1)) ]
+        then 
+           print_message $RED "❌ Invalid table number"
+           echo ""
+           continue
+        fi 
+        break
+    done
+table_name="${table_names[$((number-1))]}"
+
+# awk -F: '
+#     NF > 0 && $0 !~ /^#/ {
+#         cname = $1
+#         dtype = $2
+#         constraint = ($3 == "" || $3 == "NONE") ? "" : ", " $3
+#         printf "Enter value for %s (%s%s):\n", cname, dtype, constraint
+#     }
+# ' "${table_name}.meta"
+
+while IFS=':' read -r  colName dataType const 
+do
+columns+=("$colName")
+data_types+=("$dataType")
+constraints+=("$const")
+
+done  < "$DBMS_HOME/$1/${table_name}.meta" 
+while true
+do
+values=()
+for (( i=0 ; i<${#columns[@]} ; i++))
+do 
+  while true
+  do 
+     constraint_text=""
+     if [[ "$constraints[$i]" == "PRIMARY_KEY" ]]
+     then
+        constraint_text=" (PRIMARY KEY)"
+     fi
+     echo -n "Enter value for ${columns[$i]} (${data_types[$i]}$constraint_text):"
+     read value
 
 
+     if ! validate_column_value "$value" "${data_types[$i]}"
+     then
+        echo ""
+        continue
+     fi
+
+     if [[ "${constraints[$i]}" == "PRIMARY_KEY" ]] && ! validate_primary_key_unique "$table_name" "$value"
+     then
+                echo ""
+                continue
+     fi
+     values+=("$value")
+
+     break
+
+  done 
+
+done 
+    record=$(IFS=':'; echo "${values[*]}")
+    echo "$record" >> "$DBMS_HOME/$1/${table_name}.data"
+    
+    print_message $GREEN "✓ Record inserted successfully!"
+    echo
+    print_message $YELLOW "Inserted record:"
+    echo "+----------------------+----------------------+"
+    printf "| %-20s | %-20s |\n" "Column Name" "Value"
+    echo "+----------------------+----------------------+"
+
+    for (( i = 0; i < ${#columns[@]}; i++ )); do
+    printf "| %-20s | %-20s |\n" "${columns[$i]}" "${values[$i]}" 
+    done
+
+    echo "+----------------------+----------------------+"
+
+    echo
+if ! ask_yes_no "Do you want to insert another record into '$table_name'?"
+then
+    break
+fi
+done
+echo ""
+DBmenu "$1"
 }
+
+
+# 1. Show available tables √
+# 2. Let user select a table √
+# 3. Read table structure from .meta file √
+# 4. Prompt for each column value
+# 5. Validate data types (integer vs string)
+# 6. Check primary key uniqueness
+# 7. Append data to .data file
+
+# Insert Data
+# Available tables: employees, departments√
+# Enter table name: employees√
+# Enter value for id (integer, Primary Key): 1
+# Enter value for name (string): John Doe
+# Enter value for salary (integer): 50000
+# ✓ Record inserted successfully!

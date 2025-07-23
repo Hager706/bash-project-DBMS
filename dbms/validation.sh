@@ -73,23 +73,23 @@ validate_column_value() {
     #1>>> value
     #2>>> datatype
     case "$2" in
-        "Integer")
+         "Integer"|"integer"|"int"|"INT")
             if [[ "$1" =~ ^-?[0-9]+$ ]]; then
                 return 0
             else
-                print_message $RED "❌ '$value' is not a valid integer!"
+                print_message $RED "❌ '$1' is not a valid integer!"
                 return 1
             fi
             ;;
-        "String")
-            if [ -n "$1" ]; then
+        "String"|"string"|"str"|"STR"|"VARCHAR"|"varchar")
+            if [ -n "$1" ] && validate_name "$1"; then
                 return 0
             else
-                print_message $RED "❌ String value cannot be empty!"
+                print_message $RED "❌ Invalid string value!"
                 return 1
             fi
             ;;
-        "Boolean")
+        "BOOLEAN"|"boolean"|"BOOL"|"bool")
             if [[ "$1" == "true" || "$1" == "false" ]]; then
                 return 0
             else
