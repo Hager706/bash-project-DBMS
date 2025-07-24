@@ -3,28 +3,28 @@
 validate_name() {
     
     if [ -z "$1" ]; then  
-        print_message $RED "❌ Error: Name cannot be empty!"
+        print_message $RED "✗ Error: Name cannot be empty!"
         return 1
     fi
     
     if [[ "$1" =~ ^[0-9] ]]; then
-        print_message $RED "❌ Error: Name cannot start with a number!"
+        print_message $RED "✗ Error: Name cannot start with a number!"
         return 1
     fi
     
     if [[ ! "$1" =~ ^[a-zA-Z][a-zA-Z0-9_]*$ ]]; then
-        print_message $RED "❌ Error: Name can only contain letters, numbers, and underscores!"
+        print_message $RED "✗ Error: Name can only contain letters, numbers, and underscores!"
         echo "       It must start with a letter."
         return 1
     fi
     
     if [ ${#1} -gt 30 ]; then
-        print_message $RED "❌ Error: Name is too long! Maximum 30 characters allowed."
+        print_message $RED "✗ Error: Name is too long! Maximum 30 characters allowed."
         return 1
     fi
     
     if [[ "$1" =~ [[:space:]] ]]; then
-        print_message $RED "❌ Error: Database name cannot contain spaces"
+        print_message $RED "✗ Error: Database name cannot contain spaces"
         return 1
     fi
     return 0
@@ -33,7 +33,7 @@ validate_name() {
 validate_database_exists() {
     
     if [ ! -d "$1" ]; then
-        print_message $RED "❌ Error: Database '$1' does not exist!"
+        print_message $RED "✗ Error: Database '$1' does not exist!"
         return 1
     fi
     
@@ -43,7 +43,7 @@ validate_database_exists() {
 validate_database_unique() {
     
     if [ -d "$1" ]; then
-         print_message $RED "❌ Error: Database '$1' already exists!"
+         print_message $RED "✗ Error: Database '$1' already exists!"
         return 1
     fi
     
@@ -53,7 +53,7 @@ validate_database_unique() {
 validate_table_exists() {
     
     if [ ! -f "${1}.meta" ]; then
-       print_message $RED "❌ Error: Table '$1' does not exist!"
+       print_message $RED "✗ Error: Table '$1' does not exist!"
         return 1
     fi
     
@@ -62,7 +62,7 @@ validate_table_exists() {
 validate_table_unique() {
     
     if [ -f "${1}.meta" ]; then
-        echo $RED"❌ Error: Table '$1' already exists!"
+        echo $RED"✗ Error: Table '$1' already exists!"
         return 1
     fi
     
@@ -77,7 +77,7 @@ validate_column_value() {
             if [[ "$1" =~ ^-?[0-9]+$ ]]; then
                 return 0
             else
-                print_message $RED "❌ '$1' is not a valid integer!"
+                print_message $RED "✗ '$1' is not a valid integer!"
                 return 1
             fi
             ;;
@@ -85,7 +85,7 @@ validate_column_value() {
             if [ -n "$1" ] && validate_name "$1"; then
                 return 0
             else
-                print_message $RED "❌ Invalid string value!"
+                print_message $RED "✗ Invalid string value!"
                 return 1
             fi
             ;;
@@ -93,12 +93,12 @@ validate_column_value() {
             if [[ "$1" == "true" || "$1" == "false" ]]; then
                 return 0
             else
-                print_message $RED "❌ '$1' is not a valid boolean value!"
+                print_message $RED "✗ '$1' is not a valid boolean value!"
                 return 1
             fi
             ;;
         *)
-            print_message $RED "❌ Unknown data type: $2"
+            print_message $RED "✗ Unknown data type: $2"
             return 1
             ;;
     esac
@@ -118,7 +118,7 @@ validate_data_type() {
             return 0
             ;;
         *)
-            print_message $RED "❌ Invalid data type "
+            print_message $RED "✗ Invalid data type "
             return 1
             ;;
     esac
@@ -127,7 +127,7 @@ validate_data_type() {
 validate_integer() {  
     
     if ! [[ "$1" =~ ^-?[0-9]+$ ]]; then
-        print_message $RED "❌ Error: '$1' is not a valid integer!"
+        print_message $RED "✗ Error: '$1' is not a valid integer!"
         return 1
     fi
     
@@ -136,7 +136,7 @@ validate_integer() {
 validate_positive_integer() {
 
     if ! [[ "$1" =~ ^[1-9][0-9]*$ ]]; then
-        print_message $RED "❌ Error: '$1' is not a valid!"
+        print_message $RED "✗ Error: '$1' is not a valid!"
         return 1
     fi
 
@@ -145,12 +145,12 @@ validate_positive_integer() {
 ###########################################Function to validate string input (basic validation)######################################################################
 validate_string() {    
     if [ -z "$1" ]; then
-        print_message $RED "❌ Error: String cannot be empty!"
+        print_message $RED "✗ Error: String cannot be empty!"
         return 1
     fi
 
     if [ ${#1} -gt 100 ]; then
-        print_message $RED "❌ Error: String is too long! Maximum 100 characters allowed."
+        print_message $RED "✗ Error: String is too long! Maximum 100 characters allowed."
         return 1
     fi
     
@@ -177,7 +177,7 @@ get_valid_input() {
             echo "$input"
             return 0
         fi
-        print_message $RED "Please try again."
+        print_message $RED "✗ Error:Please try again."
         echo ""
     done
 }
@@ -196,7 +196,7 @@ validate_column_unique() {
     #2>>> column name
     if [ -f "${1}.meta" ] && cut -d: -f1 "${1}.meta" | grep -qx "$2"
     then
-        print_message $RED "❌ Error: Column '$2' already exists in table '$1'!"
+        print_message $RED "✗ Error: Column '$2' already exists in table '$1'!"
         return 1
     fi
     
@@ -210,7 +210,7 @@ validate_primary_key_unique() {
     
     if [ -f "${1}.data" ] && cut -d: -f1 "${1}.data" | grep -qx "$2"
     then
-        print_message $RED "❌ Error: Primary key '$2' already exists in table '$1'!"
+        print_message $RED "✗ Error: Primary key '$2' already exists in table '$1'!"
         return 1
     fi
     
@@ -236,7 +236,7 @@ ask_yes_no() {
                 return 1  
                 ;;
             *)
-                print_message $RED "❌ Invalid input. Please enter 'y' or 'n'."
+                print_message $RED "✗ Invalid input. Please enter 'y' or 'n'."
                 ;;
         esac
     done

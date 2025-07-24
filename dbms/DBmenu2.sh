@@ -1,5 +1,4 @@
 select_from_table() {
-
 print_message $BLUE "Select Data from Tables in Database: $1"
 local found=0
 local count=1
@@ -12,7 +11,7 @@ do
            if [ $found -eq 0 ]; then
             echo ""
             print_message $GREEN "Available tables:"
-        
+            #make this because the Available tables: print with every table found
             fi
             found=1
             table_name="${file%.meta}"
@@ -26,7 +25,7 @@ done
     if [ $found -eq 0 ]
     then
         echo ""
-        print_message $RED "❌ No tables found "
+        print_message $RED "✗ Error: No tables found "
         echo " "
         if ask_yes_no "Do you want to create a table?" 
         then
@@ -54,7 +53,7 @@ do
 
         if [ "$number" -lt 1 ] || [ "$number" -gt $((count - 1)) ]
         then 
-           print_message $RED "❌ Invalid table number"
+           print_message $RED "✗ Error:Invalid table number"
            echo ""
            continue
         fi 
@@ -64,8 +63,9 @@ do
     table_name="${table_names[$((number-1))]}"
 while true
 do
+
 PS3="Please select an option (1-4): "
-        select choice in "View all records" "View specific record" "View specific columns" "Back to database Menu"; do
+    select choice in "View all records" "View specific record" "View specific columns" "Back to database Menu"; do
             case $choice in
                 "View all records") 
                     Viewall "$table_name"
@@ -84,7 +84,7 @@ PS3="Please select an option (1-4): "
                     DBmenu "$1"
                     ;;
                 *)
-                    print_message $RED "❌ Invalid option. Please try again."
+                    print_message $RED "✗ Error:Invalid option. Please try again."
                     break
                     ;;
             esac
@@ -93,20 +93,10 @@ PS3="Please select an option (1-4): "
 # Show available tables √
 # Let user select a table √
 # Provide options:√
-# View all records √
-# View specific record by primary key
-# View specific columns only
-# Display data in formatted table
-
-# Expected User Flow:
-# Select Data
-# Available tables: employees, departments
-# Enter table name: employees
-# Select option:
-# 1) View all records
-# 2) View specific record
-# 3) View specific columns
-# Choice: 1
+#    View all records √
+#    View specific record by primary key√
+#    View specific columns only√
+# Display data in formatted table√
 
 # === employees table ===
 # ID    | Name      | Salary
@@ -119,7 +109,7 @@ local table="$1"
 local data_file="${table}.data"
  
     if [ ! -f "$data_file" ]; then
-        print_message $RED "❌ Error: Data file for table '$table' not found!"
+        print_message $RED "✗ Error:Data file for table '$table' not found!"
         return 1
     fi
  
@@ -163,43 +153,50 @@ local data_file="${table}.data"
 local meta_file="${table}.meta"
     
     if [ ! -f "$data_file" ]; then
-        print_message $RED "❌ Error: Data file for table '$table' not found!"
+        print_message $RED "✗ Error: Data file for table '$table' not found!"
         return 1
     fi
     
     if [ ! -f "$meta_file" ]; then
-        print_message $RED "❌ Error: Meta file for table '$table' not found!"
+        print_message $RED "✗ Error: Meta file for table '$table' not found!"
         return 1
     fi
     
-    # Read primary key from meta file (first line, first column)
-    local primary_key=$(head -n 1 "$meta_file" | cut -d':' -f1)
+    local primary_key=$(head -n 1 "$data_file" | cut -d':' -f1)
     
     echo ""
     print_message $BLUE "=== View Specific Record from $table table ==="
     echo ""
     
-    # Show available records with their primary key values
-    print_message $GREEN "Available records (showing $primary_key values):"
-    echo ""
-    
-    # Read header
     IFS= read -r header < "$data_file"
     IFS=':' read -ra columns <<< "$header"
-    
-    # Find primary key index
-    local pk_index=0
-    for i in "${!columns[@]}"; do
-        if [ "${columns[$i]}" = "$primary_key" ]; then
-            pk_index=$i
-            break
+    # print_message $GREEN "Available records (showing $primary_key values):"
+    # echo ""
+    record_count=$(($(wc -l < "$data_file") - 1))
+    if [ $record_count -eq 0 ]; then
+        print_message $RED "✗ Error:No records found in table '$table'"
+        echo ""
+        print_message $BLUE "The table exists but contains no data."
+        if ask_yes_no "Would you like to add a record to this table?"; then
+            echo ""
+           insert_into_table "$table"
         fi
-    done
-    
+        return
+    fi
+
+    local pk_index=0 # because primary key is always the first column
+
     # Show available primary key values
-    tail -n +2 "$data_file" | while IFS=':' read -ra fields; do
-        echo "- ${fields[$pk_index]}"
-    done
+print_message $GREEN "Available Primary Key values in table '$table_name':"
+echo "+----------------------+"
+printf "| %-20s |\n" "$primary_key"
+echo "+----------------------+"
+
+tail -n +2 "$data_file" | cut -d: -f1 | while read -r pk_value; do
+    printf "| %-20s |\n" "$pk_value"
+done
+
+echo "+----------------------+"
     
     echo ""
     while true; do
@@ -211,34 +208,32 @@ local meta_file="${table}.meta"
         fi
         
         if [ -z "$pk_value" ]; then
-            print_message $RED "❌ Please enter a valid $primary_key value"
+            print_message $RED "✗ Error:Please enter a valid $primary_key value"
             continue
         fi
         
-        # Search for the record
         local found=0
         declare -a record_fields=()
         
-        while IFS=':' read -ra fields; do
-            if [ "${fields[$pk_index]}" = "$pk_value" ]; then
-                found=1
-                record_fields=("${fields[@]}")
-                break
-            fi
-        done < <(tail -n +2 "$data_file")
+         tail -n +2 "$data_file" | while IFS=':' read -ra fields; do
+        if [ "${fields[$pk_index]}" = "$pk_value" ]; then
+          found=1
+         record_fields=("${fields[@]}")
+          break
+        fi
+    done
         
         if [ $found -eq 0 ]; then
-            print_message $RED "❌ No record found with $primary_key = $pk_value"
+            print_message $RED "✗ Error:No record found with $primary_key = $pk_value"
             continue
         fi
         
-        # Display the found record
         echo ""
         print_message $BLUE "=== Record Details ==="
         
         # Print header
         printf "|"
-        for col in "${columns[@]}"; do
+        for col in "${columns[@]}"; do #columns: contains the column names
             printf " %-15s |" "$col"
         done
         echo
@@ -252,7 +247,7 @@ local meta_file="${table}.meta"
         
         # Print the record
         printf "|"
-        for field in "${record_fields[@]}"; do
+        for field in "${record_fields[@]}"; do #record_fields: contains the actual data
             printf " %-15s |" "$field"
         done
         echo
@@ -267,7 +262,7 @@ ViewspecCol() {
     local data_file="${table}.data"
     
     if [ ! -f "$data_file" ]; then
-        print_message $RED "❌ Error: Data file for table '$table' not found!"
+        print_message $RED "✗ Error: Data file for table '$table' not found!"
         return 1
     fi
     
@@ -275,7 +270,6 @@ ViewspecCol() {
     print_message $BLUE "=== View Specific Columns from $table table ==="
     echo ""
     
-    # Read header
     IFS= read -r header < "$data_file"
     IFS=':' read -ra columns <<< "$header"
     
@@ -296,23 +290,22 @@ ViewspecCol() {
         fi
         
         if [ ${#selected_numbers[@]} -eq 0 ]; then
-            print_message $RED "❌ Please enter at least one column number"
+            print_message $RED "✗ Error:Please enter at least one column number"
             continue
         fi
         
-        # Validate selected numbers
         local valid=1
         declare -a selected_indices=()
         
         for num in "${selected_numbers[@]}"; do
             if ! validate_positive_integer "$num"; then
-                print_message $RED "❌ Invalid number: $num"
+                print_message $RED "✗ Error:Invalid number: $num"
                 valid=0
                 break
             fi
             
             if [ "$num" -lt 1 ] || [ "$num" -gt ${#columns[@]} ]; then
-                print_message $RED "❌ Column number $num is out of range (1-${#columns[@]})"
+                print_message $RED "✗ Error:Column number $num is out of range (1-${#columns[@]})"
                 valid=0
                 break
             fi
@@ -387,7 +380,7 @@ done
     if [ $found -eq 0 ]
     then
         echo ""
-        print_message $RED "❌ No tables found "
+        print_message $RED "✗ Error:No tables found "
         echo " "
         if ask_yes_no "Do you want to create a table?" 
         then
@@ -415,7 +408,7 @@ do
 
         if [ "$number" -lt 1 ] || [ "$number" -gt $((count - 1)) ]
         then 
-           print_message $RED "❌ Invalid table number"
+           print_message $RED "✗ Error:Invalid table number"
            echo ""
            continue
         fi 
@@ -442,7 +435,7 @@ PS3="Please select an option (1-3): "
                     DBmenu "$1"
                     ;;
                 *)
-                    print_message $RED "❌ Invalid option. Please try again."
+                    print_message $RED "✗ Error:Invalid option. Please try again."
                     break
                     ;;
             esac
@@ -456,18 +449,6 @@ PS3="Please select an option (1-3): "
 #   Delete all records (keep table structure)√
 # Confirm deletion before proceeding 
 # Update .data file
-
-# Delete Data
-# Available tables: employees
-# Enter table name: employees
-# Select option:
-# 1) Delete specific record
-# 2) Delete all records
-# Choice: 1
-# Enter primary key value to delete: 1
-# Record found: 1:John Doe:50000
-# Are you sure you want to delete this record? (y/n): y
-# ✓ Record deleted successfully!
 }
 DeletespecRec() {
     local table="$1"
@@ -477,12 +458,12 @@ DeletespecRec() {
     Viewall "$table"
     
     if [ ! -f "$data_file" ]; then
-        print_message $RED "❌ Error: Data file for table '$table' not found!"
+        print_message $RED "✗ Error: Data file for table '$table' not found!"
         return 1
     fi
     
     if [ ! -f "$meta_file" ]; then
-        print_message $RED "❌ Error: Meta file for table '$table' not found!"
+        print_message $RED "✗ Error: Meta file for table '$table' not found!"
         return 1
     fi
     
@@ -500,7 +481,7 @@ DeletespecRec() {
     done
     
     if [ $pk_index -eq 0 ] && [ "${columns[0]}" != "$primary_key" ]; then
-        print_message $RED "❌ Error: Primary key '$primary_key' not found in table '$table'!"
+        print_message $RED "✗ Error: Primary key '$primary_key' not found in table '$table'!"
         return 1
     fi
     
@@ -514,7 +495,7 @@ DeletespecRec() {
         fi
         
         if [ -z "$pk_value" ]; then
-            print_message $RED "❌ Please enter a valid $primary_key value"
+            print_message $RED "✗ Error:Please enter a valid $primary_key value"
             continue
         fi
         
@@ -530,7 +511,7 @@ DeletespecRec() {
         done < <(tail -n +2 "$data_file")
         
         if [ $found -eq 0 ]; then
-            print_message $RED "❌ No record found with $primary_key = $pk_value"
+            print_message $RED "✗ Error:No record found with $primary_key = $pk_value"
             continue
         fi
         
@@ -577,14 +558,14 @@ DeletespecRec() {
             fi
             
             echo ""
-            print_message $GREEN "✅ Record with $primary_key = $pk_value deleted successfully!"
+            print_message $GREEN "✓ Record with $primary_key = $pk_value deleted successfully!"
             echo ""
             
             # Show updated table
             print_message $BLUE "Updated table:"
             Viewall "$table"
         else
-            print_message $BLUE "❌ Deletion cancelled"
+            print_message $BLUE "Deletion cancelled"
             echo ""
         fi
         
@@ -598,7 +579,7 @@ DeleteAll() {
     local data_file="${table}.data"
     
     if [ ! -f "$data_file" ]; then
-        print_message $RED "❌ Error: Data file for table '$table' not found!"
+        print_message $RED "✗ Error: Data file for table '$table' not found!"
         return 1
     fi
     
@@ -614,8 +595,8 @@ DeleteAll() {
         return 0
     fi
     
-    print_message $YELLOW "⚠️  This will delete ALL $record_count records from table '$table'"
-    print_message $YELLOW "⚠️  The table structure will be preserved (columns will remain)"
+    print_message $YELLOW "⚠️ This will delete ALL $record_count records from table '$table'"
+    print_message $YELLOW "⚠️ The table structure will be preserved (columns will remain)"
     echo ""
     
     if ask_yes_no "Are you sure you want to delete ALL records? This action cannot be undone"; then
@@ -623,14 +604,220 @@ DeleteAll() {
         sed -i '2,$d' "$data_file"
         
         echo ""
-        print_message $GREEN "✅ All records deleted successfully from table '$table'"
+        print_message $GREEN "✓ All records deleted successfully from table '$table'"
         print_message $BLUE "Table structure preserved. You can add new records anytime."
         echo ""
         
         # Show empty table
         Viewall "$table"
     else
-        print_message $BLUE "❌ Deletion cancelled"
+        print_message $BLUE "Deletion cancelled"
         echo ""
     fi
+}
+
+update_table() {
+    local db_name="$1"
+    print_message $BLUE "=== Update Records in Table ==="
+    echo
+    
+    # Show available tables
+    meta_files=($(ls "$DBMS_HOME/$db_name"/*.meta 2>/dev/null))
+    
+    if [ ${#meta_files[@]} -eq 0 ]; then
+        print_message $YELLOW "No tables found in database '$db_name'"
+        echo
+        return
+    fi
+    
+    print_message $GREEN "Available tables:"
+    for (( i = 0; i < ${#meta_files[@]}; i++ )); do
+        table_name=$(basename "${meta_files[$i]}" .meta)
+        print_message $GREEN "$((i+1)). $table_name"
+    done
+    echo
+    
+    while true; do
+        echo -n "Enter table number (or 'back' to return): "
+        read table_num
+        
+        if [ "$table_num" = "back" ]; then
+            return
+        fi
+        
+        if validate_positive_integer "$table_num"; then
+            table_index=$((table_num - 1))
+            if [ "$table_index" -ge 0 ] && [ "$table_index" -lt ${#meta_files[@]} ]; then
+                selected_table=$(basename "${meta_files[$table_index]}" .meta)
+                break
+            else
+                print_message $RED "❌ Invalid table number!"
+                echo
+            fi
+        else
+            print_message $RED "❌ Please enter a valid number."
+            echo
+        fi
+    done
+    
+    print_message $YELLOW "Updating table: $selected_table"
+    echo
+    
+    # Check if table has data
+    data_file="$DBMS_HOME/$db_name/${selected_table}.data"
+    if [ ! -s "$data_file" ]; then
+        print_message $YELLOW "Table is empty - nothing to update"
+        echo
+        return
+    fi
+    
+    # Display current table data
+    print_message $BLUE "Current table data:"
+    display_table_data "$db_name" "$selected_table"
+    
+    # Read table metadata
+    declare -a columns
+    declare -a data_types
+    declare -a constraints
+    
+    while IFS=':' read -r col_name data_type constraint; do
+        columns+=("$col_name")
+        data_types+=("$data_type")
+        constraints+=("$constraint")
+    done < "$DBMS_HOME/$db_name/${selected_table}.meta"
+    
+    # Find primary key column (first column)
+    primary_key_col="${columns[0]}"
+    primary_key_type="${data_types[0]}"
+    
+    # Get primary key value to identify record
+    while true; do
+        echo -n "Enter $primary_key_col value of record to update: "
+        read pk_value
+        
+        # Validate data type
+        if [ "$primary_key_type" = "integer" ]; then
+            if ! [[ "$pk_value" =~ ^-?[0-9]+$ ]]; then
+                print_message $RED "❌ Invalid integer value!"
+                continue
+            fi
+        fi
+        
+        # Check if record exists
+        if ! grep -q "^$pk_value:" "$data_file"; then
+            print_message $RED "❌ No record found with $primary_key_col = '$pk_value'"
+            echo
+            continue
+        fi
+        
+        break
+    done
+    
+    # Show current record
+    print_message $YELLOW "Current record:"
+    current_record=$(grep "^$pk_value:" "$data_file")
+    IFS=':' read -ra current_values <<< "$current_record"
+    
+    for (( i = 0; i < ${#columns[@]}; i++ )); do
+        print_message $BLUE "  ${columns[$i]}: ${current_values[$i]}"
+    done
+    echo
+    
+    # Choose columns to update (excluding primary key)
+    print_message $YELLOW "Available columns to update:"
+    for (( i = 1; i < ${#columns[@]}; i++ )); do
+        print_message $GREEN "$i. ${columns[$i]} (${data_types[$i]}) - Current: ${current_values[$i]}"
+    done
+    echo
+    
+    while true; do
+        echo -n "Enter column number to update (or 'done' when finished, 'back' to cancel): "
+        read col_choice
+        
+        if [ "$col_choice" = "back" ]; then
+            print_message $YELLOW "Update operation cancelled."
+            echo
+            return
+        fi
+        
+        if [ "$col_choice" = "done" ]; then
+            break
+        fi
+        
+        if validate_positive_integer "$col_choice"; then
+            if [ "$col_choice" -ge 1 ] && [ "$col_choice" -lt ${#columns[@]} ]; then
+                col_index="$col_choice"
+                col_name="${columns[$col_index]}"
+                col_type="${data_types[$col_index]}"
+                current_val="${current_values[$col_index]}"
+                
+                print_message $BLUE "Updating column: $col_name (${col_type})"
+                print_message $BLUE "Current value: $current_val"
+                
+                while true; do
+                    echo -n "Enter new value (or 'skip' to keep current): "
+                    read new_value
+                    
+                    if [ "$new_value" = "skip" ]; then
+                        break
+                    fi
+                    
+                    # Validate data type
+                    if [ "$col_type" = "integer" ]; then
+                        if [[ "$new_value" =~ ^-?[0-9]+$ ]]; then
+                            current_values[$col_index]="$new_value"
+                            print_message $GREEN "✓ Column '$col_name' updated to: $new_value"
+                            break
+                        else
+                            print_message $RED "❌ Invalid integer value!"
+                        fi
+                    else
+                        # String type
+                        if [ -n "$new_value" ]; then
+                            current_values[$col_index]="$new_value"
+                            print_message $GREEN "✓ Column '$col_name' updated to: $new_value"
+                            break
+                        else
+                            print_message $RED "❌ Value cannot be empty!"
+                        fi
+                    fi
+                done
+                echo
+            else
+                print_message $RED "❌ Invalid column number!"
+                echo
+            fi
+        else
+            print_message $RED "❌ Please enter a valid number, 'done', or 'back'."
+            echo
+        fi
+    done
+    
+    # Show updated record
+    print_message $YELLOW "Updated record will be:"
+    for (( i = 0; i < ${#columns[@]}; i++ )); do
+        print_message $BLUE "  ${columns[$i]}: ${current_values[$i]}"
+    done
+    echo
+    
+    if ask_yes_no "Save these changes?"; then
+        # Create new record string
+        new_record=$(IFS=':'; echo "${current_values[*]}")
+        
+        # Create temporary file with updated record
+        temp_file=$(mktemp)
+        while IFS= read -r line; do
+            if [[ "$line" =~ ^$pk_value: ]]; then
+                echo "$new_record"
+            else
+                echo "$line"
+            fi
+        done < "$data_file" > "$temp_file"
+        
+        mv "$temp_file" "$data_file"
+        print_message $GREEN "✓ Record updated successfully!"
+    else
+        print_message $YELLOW "Update operation cancelled."
+    fi
+    echo
 }

@@ -46,7 +46,7 @@ DBmenu() {
 		    show_main_menu
                     ;;
                 *)
-                    print_message $RED "❌ Invalid option. Please try again."
+                    print_message $RED " Invalid option. Please try again."
                     break
                     ;;
             esac
@@ -83,7 +83,7 @@ cd "$DBMS_HOME/$1" || return
 
     touch "${table_name}.meta"
     if [ $? -ne 0 ]; then
-        print_message $RED "❌ Failed to create table meta file!"
+        print_message $RED " Failed to create table meta file!"
         return
     fi
 
@@ -98,7 +98,7 @@ cd "$DBMS_HOME/$1" || return
 
         if [ $columns_num -gt 20 ]
         then
-            print_message $RED "❌ Error: number of columns too large!"
+            print_message $RED " Error: number of columns too large!"
             continue
         fi
         break
@@ -230,7 +230,7 @@ local found=0
 
     if [ $found -eq 0 ]
     then
-        print_message $RED "❌ No tables found "
+        print_message $RED " No tables found "
     fi
     echo 
 
@@ -263,7 +263,7 @@ done
     if [ $found -eq 0 ]
     then
         echo ""
-        print_message $RED "❌ No tables found "
+        print_message $RED " No tables found "
         echo " "
         if ask_yes_no "Do you want to create a table?" 
         then
@@ -291,7 +291,7 @@ do
 
         if [ "$number" -lt 1 ] || [ "$number" -gt $((count - 1)) ]
         then 
-           print_message $RED "❌ Invalid table number"
+           print_message $RED " Invalid table number"
            echo ""
            continue
         fi 
@@ -355,7 +355,7 @@ done
     if [ $found -eq 0 ]
     then
         echo ""
-        print_message $RED "❌ No tables found "
+        print_message $RED " No tables found "
         echo " "
         if ask_yes_no "Do you want to create a table?" 
         then
@@ -383,7 +383,7 @@ do
 
         if [ "$number" -lt 1 ] || [ "$number" -gt $((count - 1)) ]
         then 
-           print_message $RED "❌ Invalid table number"
+           print_message $RED " Invalid table number"
            echo ""
            continue
         fi 

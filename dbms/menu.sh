@@ -28,7 +28,7 @@ do
                   exit 0
                   ;;
             *)
-            print_message $RED"❌ Invalid option. Please select 1-5."
+            print_message $RED"✗ Error:Invalid option. Please select 1-5."
             echo
                   continue
                   ;;
@@ -79,7 +79,7 @@ done
 
 list_databases() {
     if [ -z "$(ls -A "$DBMS_HOME" 2>/dev/null)" ]; then
-        print_message $RED "No databases found!"
+        print_message $RED "✗ Error:No databases found!"
         if ask_yes_no "Do you want to create a database?"
         then
             create_database
@@ -113,10 +113,10 @@ list_databases() {
                         connect_to_database "$selected_db"
                         break
                     else
-                        print_message $RED "❌ Invalid number! Please choose a number from the list."
+                        print_message $RED "✗ Error:Invalid number! Please choose a number from the list."
                     fi
                 else
-                    print_message $RED "❌ Please enter a valid positive number."
+                    print_message $RED "✗ Error:Please enter a valid positive number."
                 fi
             done
         else
@@ -130,7 +130,7 @@ list_databases() {
 
 connect_to_database() {
  if [ -z "$(ls -A "$DBMS_HOME" 2>/dev/null)" ]; then
-        print_message $RED "No databases found!"
+        print_message $RED "✗ Error:No databases found!"
         if ask_yes_no "Do you want to create a database?"
         then
             create_database
@@ -169,7 +169,7 @@ connect_to_database() {
 			#cd ..
 
                     else
-                        print_message $RED "❌ Invalid number! Please choose a number from the list."
+                        print_message $RED "✗ Error: Invalid number! Please choose a number from the list."
                     fi
                 fi
             done
@@ -179,7 +179,7 @@ fi
 drop_database() {
 
 if [ -z "$(ls -A "$DBMS_HOME" 2>/dev/null)" ]; then
-        print_message $RED "No databases found!"
+        print_message $RED "✗ Error:No databases found!"
         if ask_yes_no "Do you want to create a database?"
         then
             create_database
@@ -227,15 +227,15 @@ if [ -z "$(ls -A "$DBMS_HOME" 2>/dev/null)" ]; then
                         print_message $GREEN "Database '$selected_db' dropped successfully!"
 					show_main_menu
 				 else 
-			   print_message $RED "❌ Failed to delete database '$selected_db'"
+			   print_message $RED "✗ Error: Failed to delete database '$selected_db'"
 				fi
 		      else
-                                    print_message $RED "❌ Operation cancelled."
+                                    print_message $RED "✗ Error:Operation cancelled."
                                     echo
                       fi
                       return
                     else
-                        print_message $RED "❌ Invalid number! Please choose a number from the list."
+                        print_message $RED "✗ Error:Invalid number! Please choose a number from the list."
                     fi
                 fi
             done
