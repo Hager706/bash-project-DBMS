@@ -23,11 +23,11 @@ DBmenu() {
                     drop_table "$1"
                     break
                     ;;
-                "Insert into Table")  #work on it
+                "Insert into Table") #done <<< #work on it
                     insert_into_table "$1"
                     break
                     ;;
-                "Select From Table")   #work on it
+                "Select From Table")  #work on it
                     select_from_table "$1"
                     break
                     ;;
@@ -339,6 +339,7 @@ do
         if [ -f "$file" ]
         then
            if [ $found -eq 0 ]; then
+            echo ""
             print_message $GREEN "Available tables:"
         
             fi
@@ -464,21 +465,23 @@ fi
 done
 echo ""
 DBmenu "$1"
-}
-
-
 # 1. Show available tables √
 # 2. Let user select a table √
 # 3. Read table structure from .meta file √
-# 4. Prompt for each column value
-# 5. Validate data types (integer vs string)
-# 6. Check primary key uniqueness
-# 7. Append data to .data file
+# 4. Prompt for each column value √
+# 5. Validate data types (integer vs string) √
+# 6. Check primary key uniqueness √
+# 7. Append data to .data file √
 
 # Insert Data
 # Available tables: employees, departments√
 # Enter table name: employees√
-# Enter value for id (integer, Primary Key): 1
-# Enter value for name (string): John Doe
-# Enter value for salary (integer): 50000
-# ✓ Record inserted successfully!
+# Enter value for id (integer, Primary Key): 1 √
+# Enter value for name (string): John Doe √
+# Enter value for salary (integer): 50000 √
+# ✓ Record inserted successfully! √
+# Insert another record into 'employees'?
+}
+
+##########################################################################
+
