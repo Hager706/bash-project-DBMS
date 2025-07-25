@@ -72,6 +72,10 @@ validate_table_unique() {
 validate_column_value() {
     #1>>> value
     #2>>> datatype
+if [ -z "$1" ]; then
+        print_message $RED "✗ Error: Value cannot be empty!"
+        return 1
+fi
     case "$2" in
          "Integer"|"integer"|"int"|"INT")
             if [[ "$1" =~ ^-?[0-9]+$ ]]; then
@@ -82,10 +86,16 @@ validate_column_value() {
             fi
             ;;
         "String"|"string"|"str"|"STR"|"VARCHAR"|"varchar")
-            if [ -n "$1" ]  then
-                return 0
+            if [ -n "$1" ]
+            then
+              if [ ${#1} -gt 255 ]
+              then
+               print_message $RED "✗ String too long! Maximum 255 characters allowed."
+                   return 1
+              fi
+              return 0
             else
-                print_message $RED "✗ Invalid string value!"
+                print_message $RED "✗ '$1' is not a valid string!"
                 return 1
             fi
             ;;
@@ -163,13 +173,11 @@ get_valid_input() {
         echo -n "$prompt: "
         read input
         
-        # If no validation function provided, just return the input
         if [ -z "$validation_function" ]; then
             echo "$input"
             return 0
         fi
         
-        # Call the validation function
         if $validation_function "$input"; then
             echo "$input"
             return 0
@@ -205,10 +213,13 @@ validate_primary_key_unique() {
     #2>>> pk
     #local pk_value="$2"
     
-    if [ -f "${1}.data" ] && cut -d: -f1 "${1}.data" | grep -qx "$2"
+    if [ -f "${1}.data" ] 
     then
+        if tail -n +2 "${1}.data" | cut -d: -f1 | grep -qx "$2"
+        then
         print_message $RED "✗ Error: Primary key '$2' already exists in table '$1'!"
         return 1
+        fi
     fi
     
     return 0
@@ -231,6 +242,10 @@ ask_yes_no() {
                 ;;
             [Nn]|[Nn][Oo])
                 return 1  
+                ;;
+                "")
+                # Default to no if empty
+                return 1
                 ;;
             *)
                 print_message $RED "✗ Invalid input. Please enter 'y' or 'n'."
