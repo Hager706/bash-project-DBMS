@@ -82,7 +82,7 @@ validate_column_value() {
             fi
             ;;
         "String"|"string"|"str"|"STR"|"VARCHAR"|"varchar")
-            if [ -n "$1" ] && validate_name "$1"; then
+            if [ -n "$1" ]  then
                 return 0
             else
                 print_message $RED "✗ Invalid string value!"
@@ -90,7 +90,7 @@ validate_column_value() {
             fi
             ;;
         "BOOLEAN"|"boolean"|"BOOL"|"bool")
-            if [[ "$1" == "true" || "$1" == "false" ]]; then
+            if [[ "$1" =~ ^(true|false|TRUE|FALSE|0|1)$ ]]; then
                 return 0
             else
                 print_message $RED "✗ '$1' is not a valid boolean value!"
@@ -106,15 +106,12 @@ validate_column_value() {
 validate_data_type() {
     case "$1" in
         "Integer"|"integer"|"int"|"INT")
-            echo "Integer"
             return 0
             ;;
         "String"|"string"|"str"|"STR"|"VARCHAR"|"varchar")
-            echo "String"
             return 0
             ;;
         "BOOLEAN"|"boolean"|"BOOL"|"bool")
-            echo "Boolean"
             return 0
             ;;
         *)

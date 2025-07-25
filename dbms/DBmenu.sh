@@ -3,10 +3,11 @@ CURRENT_DB=""
 DBmenu() {
     
     while true; do
-        print_message $BLUE "╔════════════════════════════════╗"
-        print_message $BLUE "║       Database: $1"            ║
-        print_message $BLUE "╚════════════════════════════════╝"
-        echo
+print_message $CYAN ""
+print_message $CYAN "╔══════════════════════════════════════════╗"
+print_message $CYAN "║ ░▒▓█▓▒░      DATABASE MENU       ░▒▓█▓▒░ ║" 
+print_message $CYAN "╚══════════════════════════════════════════╝"
+print_message $CYAN ""
         
         PS3="Please select an option (1-8): "
         select choice in "Create Table" "List Tables" "Drop Table" "Insert into Table" "Select From Table" "Delete From Table" "Update Table" "Back to Main Menu"; do
@@ -53,10 +54,17 @@ DBmenu() {
         done
     done
 }
-#############################################################
+########################create_table#####################################
 
 create_table() {
-cd "$DBMS_HOME/$1" || return
+    echo
+print_message $BLUE "█▓▒░ CREATING TABLE IN DATABASE SYSTEM ░▒▓█"
+    echo
+if ! cd "$DBMS_HOME/$1" 2>/dev/null
+then
+        print_message $RED "✗ Error: Cannot access database directory"
+        return 1
+fi
 
     while true
     do
@@ -152,6 +160,7 @@ cd "$DBMS_HOME/$1" || return
             continue; fi
             break
         done
+
         column_names+=("$column_name")
         data_types+=("$column_type")
         if [ $i -eq 1 ]; then
@@ -178,7 +187,6 @@ cd "$DBMS_HOME/$1" || return
     } > "${table_name}.data"
 
     print_message $GREEN "✓ Table '$table_name' created successfully!"
-    # pause_for_user
     show_created_table_structure "$table_name"
 }
 show_created_table_structure() {
@@ -206,9 +214,15 @@ show_created_table_structure() {
 list_tables() {
 local found=0
 
-    #cd "$DBMS_HOME/$1" || return
-    print_message $BLUE "Tables in Database: $1"
     echo
+print_message $BLUE "█▓▒░ LIST TABLES IN DATABASE SYSTEM ░▒▓█"
+    echo
+if ! cd "$DBMS_HOME/$1" 2>/dev/null
+then
+        print_message $RED "✗ Error: Cannot access database directory"
+        return 1
+fi
+
     for file in *.meta
     do
         # if [  ! -s "$file" ]
@@ -219,7 +233,7 @@ local found=0
         # fi
 
 
-        if [ -f "$file" ]
+        if [ -f "$file" ] && [ "$file" != "*.meta" ]
         then
             found=1
             table_name="${file%.meta}"
@@ -238,6 +252,14 @@ local found=0
 
 ##############################################################################
 drop_table() {
+    echo
+print_message $BLUE "█▓▒░ LIST TABLES IN DATABASE SYSTEM ░▒▓█"
+    echo
+if ! cd "$DBMS_HOME/$1" 2>/dev/null
+then
+        print_message $RED "✗ Error: Cannot access database directory"
+        return 1
+fi
 local found=0
 local count=1
 declare -a table_names=()
@@ -269,9 +291,8 @@ done
         then
             create_table "$1"
             echo ""
-            return
+            
         fi
-        DBmenu $1
         return
     fi
     echo 
@@ -299,6 +320,7 @@ do
         break
     done
     show_created_table_structure "$table_name"
+    echo
     print_message $RED "⚠️  WARNING: This action will permanently delete the table and ALL its data!"
     echo
 
@@ -306,13 +328,13 @@ do
     table_name="${table_names[$((number-1))]}"
     if ask_yes_no "Are you sure you want to drop table '$table_name'?"
     then
-            if [ -f "$DBMS_HOME/$db_name/${table_name}.meta" ]
+            if [ -f "$DBMS_HOME/$1/${table_name}.meta" ]
             then
-                rm "$DBMS_HOME/$db_name/${table_name}.meta"
+                rm "$DBMS_HOME/$1/${table_name}.meta"
                 print_message $GREEN "✓ Removed metadata file: ${table_name}.meta"
             fi
-            if [ -f "$DBMS_HOME/$db_name/${table_name}.data" ]; then
-                rm "$DBMS_HOME/$db_name/${table_name}.data"
+            if [ -f "$DBMS_HOME/$1/${table_name}.data" ]; then
+                rm "$DBMS_HOME/$1/${table_name}.data"
                 print_message $GREEN "✓ Removed data file: ${table_name}.data"
             fi
             print_message $GREEN "✓ Table '$table_name' dropped successfully!"
