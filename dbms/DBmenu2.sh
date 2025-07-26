@@ -1,9 +1,13 @@
 select_from_table() {
-print_message $BLUE "Select Data from Tables in Database: $1"
+print_message $BLUE "█▓▒░ SELECT DATA FROM TABLE $1 ░▒▓█"
 local found=0
 local count=1
 declare -a table_names=()
 declare -a columns
+if ! cd "$DBMS_HOME/$1" 2>/dev/null; then
+        print_message $RED "✗ Error: Cannot access database directory"
+        return 1
+fi
 for file in *.meta
 do
         if [ -f "$file" ]
@@ -31,9 +35,7 @@ done
         then
             create_table "$1"
             echo ""
-            return
         fi
-        DBmenu $1
         return
     fi
     echo 
@@ -63,7 +65,11 @@ do
     table_name="${table_names[$((number-1))]}"
 while true
 do
-
+echo
+print_message $BLUE "╭━━━━━━━━━━━━[$table_name]━━━━━━━━━━━━╮"
+print_message $BLUE "┃    Select Options for Table         ┃"
+print_message $BLUE "╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯"
+echo
 PS3="Please select an option (1-4): "
     select choice in "View all records" "View specific record" "View specific columns" "Back to database Menu"; do
             case $choice in
@@ -107,16 +113,20 @@ PS3="Please select an option (1-4): "
 Viewall() {
 local table="$1"
 local data_file="${table}.data"
- 
+local record_count=$(($(wc -l < "$data_file") - 1))
+
     if [ ! -f "$data_file" ]; then
         print_message $RED "✗ Error:Data file for table '$table' not found!"
         return 1
     fi
- 
-    echo ""
-    print_message $BLUE "=== $table table ==="
-    echo
- 
+    if [ "$record_count" -eq 0 ]; then
+        print_message $YELLOW "⚠️ Table '$table_name' is empty"
+        echo
+        if ask_yes_no "Would you like to add a record to this table?"; then
+            insert_into_table "$(basename "$PWD")"
+        fi
+        return
+    fi
     IFS= read -r header < "$data_file"  #id:name:age
     IFS=':' read -ra columns <<< "$header"
     # columns[0]="id"
@@ -151,28 +161,14 @@ ViewspecRec() {
 local table="$1"
 local data_file="${table}.data"
 local meta_file="${table}.meta"
-    
-    if [ ! -f "$data_file" ]; then
-        print_message $RED "✗ Error: Data file for table '$table' not found!"
+local primary_key=$(head -n 1 "$data_file" | cut -d':' -f1)
+local record_count=$(($(wc -l < "$data_file") - 1))
+local found_record=$(tail -n +2 "$data_file" | grep "^${pk_value}:")
+
+    if [ ! -f "$data_file" ] || [ ! -f "$meta_file" ]; then
+        print_message $RED "✗ Error: Table files not found!"
         return 1
     fi
-    
-    if [ ! -f "$meta_file" ]; then
-        print_message $RED "✗ Error: Meta file for table '$table' not found!"
-        return 1
-    fi
-    
-    local primary_key=$(head -n 1 "$data_file" | cut -d':' -f1)
-    
-    echo ""
-    print_message $BLUE "=== View Specific Record from $table table ==="
-    echo ""
-    
-    IFS= read -r header < "$data_file"
-    IFS=':' read -ra columns <<< "$header"
-    # print_message $GREEN "Available records (showing $primary_key values):"
-    # echo ""
-    record_count=$(($(wc -l < "$data_file") - 1))
     if [ $record_count -eq 0 ]; then
         print_message $RED "✗ Error:No records found in table '$table'"
         echo ""
@@ -184,9 +180,13 @@ local meta_file="${table}.meta"
         return
     fi
 
+    IFS= read -r header < "$data_file"
+    IFS=':' read -ra columns <<< "$header"
+
+
+
     local pk_index=0 # because primary key is always the first column
 
-    # Show available primary key values
 print_message $GREEN "Available Primary Key values in table '$table_name':"
 echo "+----------------------+"
 printf "| %-20s |\n" "$primary_key"
@@ -212,46 +212,36 @@ echo "+----------------------+"
             continue
         fi
         
-        local found=0
-        declare -a record_fields=()
         
-         tail -n +2 "$data_file" | while IFS=':' read -ra fields; do
-        if [ "${fields[$pk_index]}" = "$pk_value" ]; then
-          found=1
-         record_fields=("${fields[@]}")
-          break
-        fi
-    done
-        
-        if [ $found -eq 0 ]; then
-            print_message $RED "✗ Error:No record found with $primary_key = $pk_value"
+        if [ -z "$found_record" ]; then
+            print_message $RED "✗ No record found with $primary_key = '$pk_value'"
             continue
         fi
+
         
-        echo ""
-        print_message $BLUE "=== Record Details ==="
+        IFS= read -r header < "$data_file"
+        IFS=':' read -ra columns <<< "$header"
         
-        # Print header
+        IFS=':' read -ra record_fields <<< "$found_record"
+        
         printf "|"
-        for col in "${columns[@]}"; do #columns: contains the column names
+        for col in "${columns[@]}"; do
             printf " %-15s |" "$col"
         done
         echo
         
-        # Print separator
         printf "|"
         for _ in "${columns[@]}"; do
-            printf -- "-----------------|"
+            printf "-----------------|"
         done
         echo
         
-        # Print the record
         printf "|"
-        for field in "${record_fields[@]}"; do #record_fields: contains the actual data
+        for field in "${record_fields[@]}"; do
             printf " %-15s |" "$field"
         done
         echo
-        echo ""
+        echo
         
         break
     done
@@ -266,14 +256,9 @@ ViewspecCol() {
         return 1
     fi
     
-    echo ""
-    print_message $BLUE "=== View Specific Columns from $table table ==="
-    echo ""
-    
     IFS= read -r header < "$data_file"
     IFS=':' read -ra columns <<< "$header"
     
-    # Show available columns
     print_message $GREEN "Available columns:"
     echo ""
     for i in "${!columns[@]}"; do
@@ -354,11 +339,15 @@ ViewspecCol() {
 
 
 delete_from_table() {
-print_message $BLUE "Delete Data from Tables in Database: $1"
+print_message $BLUE "█▓▒░ DELETE DATA FROM TABLE $1 ░▒▓█"
 local found=0
 local count=1
 declare -a table_names=()
 declare -a columns
+    if ! cd "$DBMS_HOME/$1" 2>/dev/null; then
+        print_message $RED "✗ Error: Cannot access database directory"
+        return 1
+    fi
 for file in *.meta
 do
         if [ -f "$file" ]
@@ -451,41 +440,25 @@ PS3="Please select an option (1-3): "
 # Update .data file
 }
 DeletespecRec() {
-    local table="$1"
-    local data_file="${table}.data"
-    local meta_file="${table}.meta"
-    
+local table="$1"
+local data_file="${table}.data"
+local meta_file="${table}.meta"
+local record_count=$(($(wc -l < "$data_file") - 1))
+local primary_key=$(head -n 1 "$meta_file" | cut -d':' -f1)
+local found_record=$(tail -n +2 "$data_file" | grep "^${pk_value}:")
+
     Viewall "$table"
     
-    if [ ! -f "$data_file" ]; then
-        print_message $RED "✗ Error: Data file for table '$table' not found!"
+    if [ ! -f "$data_file" ] || [ ! -f "$meta_file" ]; then
+        print_message $RED "✗ Error: Table files not found!"
         return 1
     fi
-    
-    if [ ! -f "$meta_file" ]; then
-        print_message $RED "✗ Error: Meta file for table '$table' not found!"
-        return 1
+
+    if [ "$record_count" -eq 0 ]; then
+        print_message $YELLOW "⚠️ Table '$table_name' is empty - nothing to delete"
+        return
     fi
     
-    local primary_key=$(head -n 1 "$meta_file" | cut -d':' -f1)
-    
-    IFS= read -r header < "$data_file"
-    IFS=':' read -ra columns <<< "$header"
-    
-    local pk_index=0
-    for i in "${!columns[@]}"; do
-        if [ "${columns[$i]}" = "$primary_key" ]; then
-            pk_index=$i
-            break
-        fi
-    done
-    
-    if [ $pk_index -eq 0 ] && [ "${columns[0]}" != "$primary_key" ]; then
-        print_message $RED "✗ Error: Primary key '$primary_key' not found in table '$table'!"
-        return 1
-    fi
-    
-    echo ""
     while true; do
         echo -n "Enter the $primary_key value of the record to delete (or 'back' to return): "
         read pk_value
@@ -499,50 +472,37 @@ DeletespecRec() {
             continue
         fi
         
-        local found=0
-        declare -a record_fields=()
         
-        while IFS=':' read -ra fields; do
-            if [ "${fields[$pk_index]}" = "$pk_value" ]; then
-                found=1
-                record_fields=("${fields[@]}")
-                break
-            fi
-        done < <(tail -n +2 "$data_file")
-        
-        if [ $found -eq 0 ]; then
-            print_message $RED "✗ Error:No record found with $primary_key = $pk_value"
+        if [ -z "$found_record" ]; then
+            print_message $RED "✗ No record found with $primary_key = '$pk_value'"
             continue
         fi
         
-        # Display the record to be deleted
-        echo ""
-        print_message $YELLOW "⚠️  Record to be deleted:"
-        echo ""
+
         
-        # Print header
+        IFS= read -r header < "$data_file"
+        IFS=':' read -ra columns <<< "$header"
+        IFS=':' read -ra record_fields <<< "$found_record"
+        
         printf "|"
         for col in "${columns[@]}"; do
             printf " %-15s |" "$col"
         done
         echo
         
-        # Print separator
         printf "|"
         for _ in "${columns[@]}"; do
-            printf -- "-----------------|"
+            printf "-----------------|"
         done
         echo
         
-        # Print the record
         printf "|"
         for field in "${record_fields[@]}"; do
             printf " %-15s |" "$field"
         done
         echo
-        echo ""
+        echo
         
-        # Confirm deletion
         if ask_yes_no "Are you sure you want to delete this record? This action cannot be undone"; then
             # Use sed to delete the line that contains the primary key value
             # Escape special characters in pk_value for sed
