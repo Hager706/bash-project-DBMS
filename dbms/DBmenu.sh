@@ -3,14 +3,15 @@ CURRENT_DB=""
 DBmenu() {
     
     while true; do
-print_message $CYAN ""
-print_message $CYAN "╔══════════════════════════════════════════╗"
-print_message $CYAN "║ ░▒▓█▓▒░      DATABASE MENU       ░▒▓█▓▒░ ║" 
-print_message $CYAN "╚══════════════════════════════════════════╝"
-print_message $CYAN ""
+print_message $BLUE""
+print_message $BLUE "╔══════════════════════════════════════════╗"
+print_message $BLUE "║ ░▒▓█▓▒░      DATABASE MENU       ░▒▓█▓▒░ ║" 
+print_message $BLUE "╚══════════════════════════════════════════╝"
+print_message $BLUE ""
         
-        PS3="Please select an option (1-8): "
-        select choice in "Create Table" "List Tables" "Drop Table" "Insert into Table" "Select From Table" "Delete From Table" "Update Table" "Back to Main Menu"; do
+        PS3="Please select an option (1-9): "
+        select choice in "Create Table" "List Tables" "Drop Table" "Insert into Table" "Select From Table" "Delete From Table" "Update Table" "Back to Main Menu" "Exit"
+        do
             case $choice in
                 "Create Table") #done
                     create_table "$1"
@@ -43,9 +44,13 @@ print_message $CYAN ""
                 "Back to Main Menu") #done
                     print_message $YELLOW "Disconnecting from database: $1"
                     CURRENT_DB=""
-			echo
-		    show_main_menu
+		        	echo
+		           show_main_menu
                     ;;
+                    "Exit")
+              print_message $GREEN "Goodbye! Thank you for using our DBMS."
+               exit 0
+                 ;;
                 *)
                     print_message $RED " Invalid option. Please try again."
                     break
@@ -142,6 +147,13 @@ fi
             if ! validate_string "$column_name"
             then echo ""
             continue
+            fi
+
+            if ! check_duplicate_column "$column_name"
+            then
+                print_message $RED "✗ Error: Column name '$column_name' already exists in this table!"
+                echo ""
+                continue
             fi
 
             if ! validate_column_unique "$table_name" "$column_name"

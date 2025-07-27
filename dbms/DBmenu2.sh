@@ -66,12 +66,15 @@ do
 while true
 do
 echo
-print_message $BLUE "╭━━━━━━━━━━━━[$table_name]━━━━━━━━━━━━╮"
+print_message $BLUE "╭━━━━━━━━━━━━[$table_name]━━━━━━━━━━━━━━╮"
 print_message $BLUE "┃    Select Options for Table         ┃"
 print_message $BLUE "╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯"
 echo
-PS3="Please select an option (1-4): "
-    select choice in "View all records" "View specific record" "View specific columns" "Back to database Menu"; do
+PS3="Please select an option (1-5): "
+echo
+echo
+    select choice in "View all records" "View specific record" "View specific columns" "Back to database Menu" "Exit" 
+    do
             case $choice in
                 "View all records") 
                     Viewall "$table_name"
@@ -89,6 +92,10 @@ PS3="Please select an option (1-4): "
 			       echo
                     DBmenu "$1"
                     ;;
+                "Exit")
+              print_message $GREEN "Goodbye! Thank you for using our DBMS."
+               exit 0
+                 ;;
                 *)
                     print_message $RED "✗ Error:Invalid option. Please try again."
                     break
@@ -161,84 +168,84 @@ ViewspecRec() {
 local table="$1"
 local data_file="${table}.data"
 local meta_file="${table}.meta"
-local primary_key=$(head -n 1 "$data_file" | cut -d':' -f1)
-local record_count=$(($(wc -l < "$data_file") - 1))
-local found_record=$(tail -n +2 "$data_file" | grep "^${pk_value}:")
+local primary_key="${columns[0]}"
+local record_count=$(tail -n +2 "$data_file" | wc -l)
 
-    if [ ! -f "$data_file" ] || [ ! -f "$meta_file" ]; then
+    if [ ! -f "$data_file" ] || [ ! -f "$meta_file" ]
+    then
         print_message $RED "✗ Error: Table files not found!"
         return 1
     fi
-    if [ $record_count -eq 0 ]; then
-        print_message $RED "✗ Error:No records found in table '$table'"
-        echo ""
-        print_message $BLUE "The table exists but contains no data."
-        if ask_yes_no "Would you like to add a record to this table?"; then
-            echo ""
-           insert_into_table "$table"
-        fi
+    
+    if [ ! -s "$data_file" ]; then
+        print_message $YELLOW "Table '$table' is empty"
         return
     fi
-
+    
     IFS= read -r header < "$data_file"
     IFS=':' read -ra columns <<< "$header"
-
-
-
-    local pk_index=0 # because primary key is always the first column
-
-print_message $GREEN "Available Primary Key values in table '$table_name':"
-echo "+----------------------+"
-printf "| %-20s |\n" "$primary_key"
-echo "+----------------------+"
-
-tail -n +2 "$data_file" | cut -d: -f1 | while read -r pk_value; do
-    printf "| %-20s |\n" "$pk_value"
-done
-
-echo "+----------------------+"
     
-    echo ""
+
+    
+    if [ "$record_count" -eq 0 ]; then
+        print_message $YELLOW "Table '$table' has no data records (only header)"
+        return
+    fi
+    
+    print_message $GREEN "Available $primary_key values in table '$table':"
+    echo "+----------------------+"
+    printf "| %-20s |\n" "$primary_key"
+    echo "+----------------------+"
+    
+    tail -n +2 "$data_file" | while IFS=':' read -r line; do
+        pk_value=$(echo "$line" | cut -d':' -f1)
+        printf "| %-20s |\n" "$pk_value"
+    done
+    
+    echo "+----------------------+"
+    echo
+    
     while true; do
         echo -n "Enter the $primary_key value of the record to view (or 'back' to return): "
-        read pk_value
+        read input_pk_value
         
-        if [ "$pk_value" = "back" ]; then
+        if [ "$input_pk_value" = "back" ]; then
             return
         fi
         
-        if [ -z "$pk_value" ]; then
-            print_message $RED "✗ Error:Please enter a valid $primary_key value"
+        if [ -z "$input_pk_value" ]; then
+            print_message $RED "✗ Error: Please enter a valid $primary_key value"
             continue
         fi
         
+        local found_record=$(tail -n +2 "$data_file" | grep "^${input_pk_value}:")
         
         if [ -z "$found_record" ]; then
-            print_message $RED "✗ No record found with $primary_key = '$pk_value'"
+            print_message $RED "✗ No record found with $primary_key = '$input_pk_value'"
             continue
         fi
-
         
-        IFS= read -r header < "$data_file"
-        IFS=':' read -ra columns <<< "$header"
-        
-        IFS=':' read -ra record_fields <<< "$found_record"
+        echo
+        print_message $GREEN "Record found:"
+        echo
         
         printf "|"
         for col in "${columns[@]}"; do
-            printf " %-15s |" "$col"
+            printf " %-15.15s |" "$col"
         done
         echo
         
         printf "|"
         for _ in "${columns[@]}"; do
-            printf "-----------------|"
+            printf -- "-----------------|"
         done
         echo
         
+        IFS=':' read -ra record_fields <<< "$found_record"
         printf "|"
         for field in "${record_fields[@]}"; do
-            printf " %-15s |" "$field"
+            # Safe printf that handles -- and other special characters
+            printf " %-15.15s |" "${field:-}"
         done
         echo
         echo
@@ -302,26 +309,22 @@ ViewspecCol() {
             continue
         fi
         
-        # Display selected columns
         echo ""
         print_message $BLUE "=== Selected Columns from $table table ==="
         echo ""
         
-        # Print selected column headers
         printf "|"
         for index in "${selected_indices[@]}"; do
             printf " %-15s |" "${columns[$index]}"
         done
         echo
         
-        # Print separator
         printf "|"
         for _ in "${selected_indices[@]}"; do
             printf -- "-----------------|"
         done
         echo
         
-        # Print data for selected columns
         tail -n +2 "$data_file" | while IFS=':' read -ra fields; do
             printf "|"
             for index in "${selected_indices[@]}"; do
@@ -339,23 +342,22 @@ ViewspecCol() {
 
 
 delete_from_table() {
-print_message $BLUE "█▓▒░ DELETE DATA FROM TABLE $1 ░▒▓█"
-local found=0
-local count=1
-declare -a table_names=()
-declare -a columns
+    print_message $BLUE "█▓▒░ DELETE DATA FROM TABLE $1 ░▒▓█"
+    local found=0
+    local count=1
+    declare -a table_names=()
+    declare -a columns
+    
     if ! cd "$DBMS_HOME/$1" 2>/dev/null; then
         print_message $RED "✗ Error: Cannot access database directory"
         return 1
     fi
-for file in *.meta
-do
-        if [ -f "$file" ]
-        then
-           if [ $found -eq 0 ]; then
-            echo ""
-            print_message $GREEN "Available tables:"
-        
+    
+    for file in *.meta; do
+        if [ -f "$file" ]; then
+            if [ $found -eq 0 ]; then
+                echo ""
+                print_message $GREEN "Available tables:"
             fi
             found=1
             table_name="${file%.meta}"
@@ -363,101 +365,103 @@ do
             print_message $GREEN "$count. $table_name"
             ((count++))
         fi
-       
-done
+    done
 
-    if [ $found -eq 0 ]
-    then
+    if [ $found -eq 0 ]; then
         echo ""
-        print_message $RED "✗ Error:No tables found "
-        echo " "
-        if ask_yes_no "Do you want to create a table?" 
-        then
+        print_message $RED "✗ Error: No tables found"
+        echo ""
+        if ask_yes_no "Do you want to create a table?"; then
             create_table "$1"
             echo ""
             return
         fi
-        DBmenu $1
-        return
+        return  # Fixed: Don't call DBmenu here, just return
     fi
     echo 
 
-while true
-do 
-        echo -n "Enter the number of the table to delete from:(or 'back' to return): "
+    while true; do 
+        echo -n "Enter the number of the table to delete from (or 'back' to return): "
         read number
         if [ "$number" = "back" ]; then
             return
         fi
-        if ! validate_positive_integer "$number"
-        then
+        if ! validate_positive_integer "$number"; then
+            print_message $RED "✗ Error: Please enter a valid number"
             echo ""
             continue
         fi 
 
-        if [ "$number" -lt 1 ] || [ "$number" -gt $((count - 1)) ]
-        then 
-           print_message $RED "✗ Error:Invalid table number"
-           echo ""
-           continue
+        if [ "$number" -lt 1 ] || [ "$number" -gt $((count - 1)) ]; then 
+            print_message $RED "✗ Error: Invalid table number"
+            echo ""
+            continue
         fi 
         break
     done
 
     table_name="${table_names[$((number-1))]}"
-while true
-do
-PS3="Please select an option (1-3): "
-        select choice in "Delete specific record by primary key" "Delete all records" "Back to database Menu"
-        do
+    
+    while true; do
+        echo
+        print_message $BLUE "╭━━━━━━━━━━━━[$table_name]━━━━━━━━━━━━━━╮"
+        print_message $BLUE "┃    Delete Options for Table         ┃"
+        print_message $BLUE "╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯"
+        echo
+        
+        PS3="Please select an option (1-3): "
+        select choice in "Delete specific record by primary key" "Delete all records" "Back to database Menu" "Exit"; do
             case $choice in
                 "Delete specific record by primary key") 
-                   DeletespecRec "$table_name"
+                    DeletespecRec "$table_name"
                     break
                     ;;
-                  "Delete all records")  
+                "Delete all records")  
                     DeleteAll "$table_name"
                     break
                     ;;
                 "Back to database Menu") 
-			       echo
-                    DBmenu "$1"
+                    echo
+                    return  # Fixed: Return instead of calling DBmenu
                     ;;
+                "Exit")
+                print_message $GREEN "Goodbye! Thank you for using our DBMS."
+                exit 0
+                 ;;
                 *)
-                    print_message $RED "✗ Error:Invalid option. Please try again."
+                    print_message $RED "✗ Error: Invalid option. Please try again."
                     break
                     ;;
             esac
         done
     done
-
-# Show available tables √
-# Let user select a table √
-# Provide options:√
-#   Delete specific record by primary key√
-#   Delete all records (keep table structure)√
-# Confirm deletion before proceeding 
-# Update .data file
 }
-DeletespecRec() {
-local table="$1"
-local data_file="${table}.data"
-local meta_file="${table}.meta"
-local record_count=$(($(wc -l < "$data_file") - 1))
-local primary_key=$(head -n 1 "$meta_file" | cut -d':' -f1)
-local found_record=$(tail -n +2 "$data_file" | grep "^${pk_value}:")
 
-    Viewall "$table"
+DeletespecRec() {
+    local table="$1"
+    local data_file="${table}.data"
+    local meta_file="${table}.meta"
     
     if [ ! -f "$data_file" ] || [ ! -f "$meta_file" ]; then
         print_message $RED "✗ Error: Table files not found!"
         return 1
     fi
 
+    # Check if table has data (more than just header)
+    local record_count=$(($(wc -l < "$data_file") - 1))
     if [ "$record_count" -eq 0 ]; then
-        print_message $YELLOW "⚠️ Table '$table_name' is empty - nothing to delete"
+        print_message $YELLOW "⚠️ Table '$table' is empty - nothing to delete"
         return
     fi
+    
+    # Show current table data
+    echo
+    print_message $BLUE "Current table data:"
+    Viewall "$table"
+    echo
+    
+    # Get primary key name from header
+    local primary_key=$(head -n 1 "$data_file" | cut -d':' -f1)
     
     while true; do
         echo -n "Enter the $primary_key value of the record to delete (or 'back' to return): "
@@ -468,72 +472,78 @@ local found_record=$(tail -n +2 "$data_file" | grep "^${pk_value}:")
         fi
         
         if [ -z "$pk_value" ]; then
-            print_message $RED "✗ Error:Please enter a valid $primary_key value"
+            print_message $RED "✗ Error: Please enter a valid $primary_key value"
             continue
         fi
         
+        # Search for the record (Fixed: moved inside the loop)
+        local found_record=$(tail -n +2 "$data_file" | grep "^${pk_value}:")
         
         if [ -z "$found_record" ]; then
             print_message $RED "✗ No record found with $primary_key = '$pk_value'"
             continue
         fi
-        
 
+        # Display the record to be deleted
+        echo
+        print_message $YELLOW "Record to be deleted:"
         
         IFS= read -r header < "$data_file"
         IFS=':' read -ra columns <<< "$header"
         IFS=':' read -ra record_fields <<< "$found_record"
         
+        # Print header with safe printf
         printf "|"
         for col in "${columns[@]}"; do
-            printf " %-15s |" "$col"
+            printf " %-15.15s |" "${col:-}"
         done
         echo
         
+        # Print separator
         printf "|"
         for _ in "${columns[@]}"; do
-            printf "-----------------|"
+            printf -- "-----------------|"
         done
         echo
         
+        # Print record data with safe printf
         printf "|"
         for field in "${record_fields[@]}"; do
-            printf " %-15s |" "$field"
+            printf " %-15.15s |" "${field:-}"
         done
         echo
         echo
         
         if ask_yes_no "Are you sure you want to delete this record? This action cannot be undone"; then
-            # Use sed to delete the line that contains the primary key value
-            # Escape special characters in pk_value for sed
-            local escaped_pk_value=$(printf '%s\n' "$pk_value" | sed 's/[[\.*^$()+?{|]/\\&/g')
+            # Create a temporary file for safe deletion
+            local temp_file=$(mktemp)
             
-            # Delete the line that starts with the primary key value (considering it's the first column)
-            if [ $pk_index -eq 0 ]; then
-                # Primary key is first column
-                sed -i "/^${escaped_pk_value}:/d" "$data_file"
+            # Copy header
+            head -n 1 "$data_file" > "$temp_file"
+            
+            # Copy all records except the one to delete
+            tail -n +2 "$data_file" | grep -v "^${pk_value}:" >> "$temp_file"
+            
+            # Replace original file
+            if mv "$temp_file" "$data_file"; then
+                echo
+                print_message $GREEN "✓ Record with $primary_key = '$pk_value' deleted successfully!"
+                echo
+                print_message $BLUE "Remaining records:"
+                Viewall "$table"
             else
-                # Primary key is in another column - use awk for more precise matching
-                awk -F':' -v pk_idx=$((pk_index+1)) -v pk_val="$pk_value" '$pk_idx != pk_val' "$data_file" > "${data_file}.tmp" && mv "${data_file}.tmp" "$data_file"
+                print_message $RED "✗ Error: Failed to delete record"
+                rm -f "$temp_file"  # Clean up temp file
             fi
-            
-            echo ""
-            print_message $GREEN "✓ Record with $primary_key = $pk_value deleted successfully!"
-            echo ""
-            
-            # Show updated table
-            print_message $BLUE "Updated table:"
-            Viewall "$table"
         else
-            print_message $BLUE "Deletion cancelled"
-            echo ""
+            print_message $YELLOW "Deletion cancelled"
+            echo
         fi
         
         break
     done
 }
 
-# Function to delete all records (keep table structure)
 DeleteAll() {
     local table="$1"
     local data_file="${table}.data"
@@ -543,36 +553,45 @@ DeleteAll() {
         return 1
     fi
     
-    # Show current table
-    Viewall "$table"
-    echo ""
-    
-    # Count current records
+    # Check if table has data (more than just header)
     local record_count=$(($(wc -l < "$data_file") - 1))
     
     if [ $record_count -eq 0 ]; then
-        print_message $YELLOW "⚠️  Table '$table' is already empty"
+        print_message $YELLOW "⚠️ Table '$table' is already empty"
         return 0
     fi
     
+    # Show current table data
+    echo
+    print_message $BLUE "Current table data:"
+    Viewall "$table"
+    echo
+    
     print_message $YELLOW "⚠️ This will delete ALL $record_count records from table '$table'"
     print_message $YELLOW "⚠️ The table structure will be preserved (columns will remain)"
-    echo ""
+    echo
     
     if ask_yes_no "Are you sure you want to delete ALL records? This action cannot be undone"; then
-        # Delete all lines except the header (line 1)
-        sed -i '2,$d' "$data_file"
+        # Keep only the header (first line)
+        local temp_file=$(mktemp)
+        head -n 1 "$data_file" > "$temp_file"
         
-        echo ""
-        print_message $GREEN "✓ All records deleted successfully from table '$table'"
-        print_message $BLUE "Table structure preserved. You can add new records anytime."
-        echo ""
-        
-        # Show empty table
-        Viewall "$table"
+        if mv "$temp_file" "$data_file"; then
+            echo
+            print_message $GREEN "✓ All records deleted successfully from table '$table'"
+            print_message $BLUE "Table structure preserved. You can add new records anytime."
+            echo
+            
+            # Show the empty table (just header)
+            print_message $BLUE "Table now contains:"
+            Viewall "$table"
+        else
+            print_message $RED "✗ Error: Failed to delete records"
+            rm -f "$temp_file"  # Clean up temp file
+        fi
     else
         print_message $BLUE "Deletion cancelled"
-        echo ""
+        echo
     fi
 }
 
@@ -581,7 +600,6 @@ update_table() {
     print_message $BLUE "=== Update Records in Table ==="
     echo
     
-    # Show available tables
     meta_files=($(ls "$DBMS_HOME/$db_name"/*.meta 2>/dev/null))
     
     if [ ${#meta_files[@]} -eq 0 ]; then

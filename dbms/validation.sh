@@ -29,6 +29,28 @@ validate_name() {
     fi
     return 0
 }
+validate_string_data() {
+    if [ -z "$1" ]; then  
+        print_message $RED "✗ Error: String data cannot be empty!"
+        return 1
+    fi
+    if [[ "$1" =~ ^[0-9] ]]; then
+        print_message $RED "✗ Error: Name cannot start with a number!"
+        return 1
+    fi
+    if [[ "$1" =~ [\;\|\$\`\\] ]]; then
+        print_message $RED "✗ Error: String data contains dangerous characters!"
+        echo "       Characters not allowed: ; | & \$ \` \\"
+        return 1
+    fi
+    
+    if [ ${#1} -gt 100 ]; then
+        print_message $RED "✗ Error: String data is too long! Maximum 100 characters allowed."
+        return 1
+    fi
+    
+    return 0
+}
 ###########################################Function to validate if a database exists######################################################################
 validate_database_exists() {
     
@@ -69,15 +91,17 @@ validate_table_unique() {
     return 0
 }
 ###########################################Function to validate data type######################################################################
+
 validate_column_value() {
     #1>>> value
     #2>>> datatype
-if [ -z "$1" ]; then
+    if [ -z "$1" ]; then
         print_message $RED "✗ Error: Value cannot be empty!"
         return 1
-fi
+    fi
+
     case "$2" in
-         "Integer"|"integer"|"int"|"INT")
+        "Integer"|"integer"|"int"|"INT")
             if [[ "$1" =~ ^-?[0-9]+$ ]]; then
                 return 0
             else
@@ -86,17 +110,11 @@ fi
             fi
             ;;
         "String"|"string"|"str"|"STR"|"VARCHAR"|"varchar")
-            if [ -n "$1" ]
-            then
-              if [ ${#1} -gt 255 ]
-              then
-               print_message $RED "✗ String too long! Maximum 255 characters allowed."
-                   return 1
-              fi
-              return 0
+           
+            if validate_string_data "$1"; then
+                return 0 
             else
-                print_message $RED "✗ '$1' is not a valid string!"
-                return 1
+                return 1  
             fi
             ;;
         "BOOLEAN"|"boolean"|"BOOL"|"bool")
@@ -130,6 +148,16 @@ validate_data_type() {
             ;;
     esac
 }
+check_duplicate_column() {
+        local new_name="$1"
+        for existing_name in "${column_names[@]}"; do
+            if [[ "$existing_name" == "$new_name" ]]; then
+                return 1 
+            fi
+        done
+        return 0  
+    }
+
 ###########################################Function to validate integer input######################################################################
 validate_integer() {  
     
@@ -243,11 +271,7 @@ ask_yes_no() {
             [Nn]|[Nn][Oo])
                 return 1  
                 ;;
-                "")
-                # Default to no if empty
-                return 1
-                ;;
-            *)
+               *)
                 print_message $RED "✗ Invalid input. Please enter 'y' or 'n'."
                 ;;
         esac
