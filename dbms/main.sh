@@ -3,10 +3,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"  #want the pwd of script
 DBMS_HOME="$SCRIPT_DIR/dbms_data"  # Main folder for all databases
 export DBMS_HOME
-chmod +x main.sh
-chmod +x validation.sh
-chmod +x main_menu.sh
-chmod +x database_menu.sh
+
 source "$SCRIPT_DIR/validation.sh"
 source "$SCRIPT_DIR/menu.sh"
 source "$SCRIPT_DIR/DBmenu.sh"
@@ -23,24 +20,10 @@ print_message() {
     local message=$2
     echo -e "${color}${message}${NC}"
 }
-setup_exit_handler() {
-    trap 'print_message $GREEN "Thank you for using Simple DBMS!"; exit 0' INT TERM
-    
-    export -f check_exit_input
-}
 
-check_exit_input() {
-    local input="$1"
-    if [ "$input" = "exit" ]; then
-        print_message $GREEN "Thank you for using Simple DBMS!"
-        exit 0
-    fi
-}
 initialize_dbms() {
-      echo ""
-    print_message $GREEN "║       DBMS Initialization    ║"
 
-    echo ""
+
 
    if [ ! -d "$DBMS_HOME" ]; then
         echo "First time running Simple DBMS ;)"
@@ -58,10 +41,11 @@ initialize_dbms() {
 }
 
 main() {
- setup_exit_handler
     
-    print_message $GREEN "✓ Starting Database Management System..."
-    print_message $BLUE "💡 Tip: Type 'exit' anytime to quit the program"
+# chmod +x main.sh
+# chmod +x validation.sh
+# chmod +x main_menu.sh
+# chmod +x database_menu.sh
     echo
     initialize_dbms
     
