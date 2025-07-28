@@ -214,13 +214,7 @@ get_valid_input() {
         echo ""
     done
 }
-###########################################Function to pause and wait for user input######################################################################
-pause_for_user() {
-    echo ""
-    echo -n "Press Enter to continue..."
-    read
-    echo ""
-}
+
 
 ###########################################Function to get valid unique######################################################################
 
@@ -257,13 +251,11 @@ validate_primary_key_unique() {
 ###########################################ask yes or no ######################################################################
 ask_yes_no() {
     local question="$1"
-    while true; do
+    while true
+    do
         echo -n "$question (Y/n): " 
         read answer
-        # if [[ -z "$answer" ]]; then
-        #     return 0   # Default to yes
-        # fi
-
+        
         case "$answer" in
             [Yy]|[Yy][Ee][Ss])
                 return 0 

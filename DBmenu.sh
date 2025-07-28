@@ -1,8 +1,8 @@
 CURRENT_DB=""
-
 DBmenu() {
     
-    while true; do
+while true
+do
 print_message $BLUE""
 print_message $BLUE "╔══════════════════════════════════════════╗"
 print_message $BLUE "║ ░▒▓█▓▒░      DATABASE MENU       ░▒▓█▓▒░ ║" 
@@ -29,15 +29,15 @@ print_message $BLUE ""
                     insert_into_table "$1"
                     break
                     ;;
-                "Select From Table")  #work on it
+                "Select From Table") #done <<< #work on it
                     select_from_table "$1"
                     break
                     ;;
-                "Delete From Table")    #work on it
+                "Delete From Table") #done <<< #work on it
                     delete_from_table "$1"
                     break
                     ;;
-                "Update Table")     #work on it
+                "Update Table") #done <<<  #work on it
                     update_table "$1"
                     break
                     ;;
@@ -222,93 +222,51 @@ show_created_table_structure() {
     echo "+----------------------+-------------+-----------------+"
 }
 
-##############################################################################
+#####################################list_tables#########################################
 list_tables() {
-local found=0
-
     echo
 print_message $BLUE "█▓▒░ LIST TABLES IN DATABASE SYSTEM ░▒▓█"
     echo
-if ! cd "$DBMS_HOME/$1" 2>/dev/null
-then
+
+    if ! cd "$DBMS_HOME/$1" 2>/dev/null
+    then
         print_message $RED "✗ Error: Cannot access database directory"
         return 1
-fi
-
-    for file in *.meta
-    do
-        # if [  ! -s "$file" ]
-        # then 
-        # table_name="${file%.meta}"
-        # print_message $YELLOW "⚠️ Table '$table_name' is empty or corrupted."
-        # continue
-        # fi
-
-
-        if [ -f "$file" ] && [ "$file" != "*.meta" ]
-        then
-            found=1
-            table_name="${file%.meta}"
-            show_created_table_structure "$table_name"
-        fi
-       
-    done
-
-    if [ $found -eq 0 ]
-    then
-        print_message $RED " No tables found "
     fi
-    echo 
 
-}
-
-##############################################################################
-drop_table() {
-    echo
-print_message $BLUE "█▓▒░ LIST TABLES IN DATABASE SYSTEM ░▒▓█"
-    echo
-if ! cd "$DBMS_HOME/$1" 2>/dev/null
-then
-        print_message $RED "✗ Error: Cannot access database directory"
-        return 1
-fi
-local found=0
-local count=1
-declare -a table_names=()
-print_message $BLUE "Drop Tables in Database: $1"
-for file in *.meta
-do
-
-        if [ -f "$file" ]
-        then
-           if [ $found -eq 0 ]; then
-            print_message $GREEN "Available tables:"
-        
-            fi
-            found=1
-            table_name="${file%.meta}"
-            table_names+=("$table_name")
-            print_message $GREEN "$count. $table_name"
-            ((count++))
-        fi
-       
-done
-
-    if [ $found -eq 0 ]
-    then
+    local table_files=($(ls *.meta 2>/dev/null))
+    
+    if [ ${#table_files[@]} -eq 0 ]; then
         echo ""
-        print_message $RED " No tables found "
-        echo " "
-        if ask_yes_no "Do you want to create a table?" 
-        then
+        print_message $RED "✗ Error: No tables found"
+        echo ""
+        if ask_yes_no "Do you want to create a table?"; then
             create_table "$1"
             echo ""
-            
         fi
         return
     fi
-    echo 
 
+    declare -a table_names=()
+    for file in "${table_files[@]}"; do
+        table_names+=("${file%.meta}")
+    done
+
+    echo ""
+    print_message $GREEN "Available tables: ${#table_names[@]}"
+    
+    for (( i = 0; i < ${#table_names[@]}; i++ )); do
+        print_message $GREEN "$((i+1)). ${table_names[$i]}"
+    done
+    echo
+}
+
+######################################drop_table########################################
+drop_table() {
+    echo
+print_message $BLUE "█▓▒░ DROP TABLES IN DATABASE SYSTEM ░▒▓█"
+    echo
+list_tables "$1"
 while true
 do 
         echo -n "Enter the number of the table to drop:(or 'back' to return): "
@@ -357,7 +315,7 @@ do
     fi
 }
 
-##########################################################################
+###################################insert_into_table#######################################
 
 insert_into_table() {
 print_message $BLUE "Insert Data in Tables in Database: $1"
@@ -424,15 +382,6 @@ do
         break
     done
 table_name="${table_names[$((number-1))]}"
-
-# awk -F: '
-#     NF > 0 && $0 !~ /^#/ {
-#         cname = $1
-#         dtype = $2
-#         constraint = ($3 == "" || $3 == "NONE") ? "" : ", " $3
-#         printf "Enter value for %s (%s%s):\n", cname, dtype, constraint
-#     }
-# ' "${table_name}.meta"
 
 while IFS=':' read -r  colName dataType const 
 do
@@ -516,6 +465,4 @@ DBmenu "$1"
 # ✓ Record inserted successfully! √
 # Insert another record into 'employees'?
 }
-
-##########################################################################
 

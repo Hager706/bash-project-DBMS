@@ -50,13 +50,11 @@ print_message $BLUE "█▓▒░ CREATING DATABASES SYSTEM ░▒▓█"
     do
       read -p "Enter database name: " db_name
       if ! validate_name "$db_name" "database name"; then
-            echo "Please try again with a valid name."
             echo ""
             continue
       fi
         
       if ! validate_database_unique "$db_name"; then
-            echo "Please choose a different name."
             echo ""
             continue
       fi
@@ -110,13 +108,15 @@ then
         done
         echo
 
-	while true; do
+	while true
+    do
                 echo -n "Enter the number of the database to connect (or 'back' to return): "
                 read number
                 if [ "$number" = "back" ]; then
                        return
                 fi
-                    if validate_positive_integer "$number"; then
+                if validate_positive_integer "$number"
+                then
                     number_in_arr=$((number - 1))
                     if [ "$number_in_arr" -ge 0 ] && [ "$number_in_arr" -lt ${#var[@]} ]; then
                         selected_db="${var[$number_in_arr]}"
@@ -133,11 +133,11 @@ then
                     else
                           print_message $RED "✗ Invalid number! Please choose a number from the list."
                           echo
-                fi
+                    fi
             else
             print_message $RED "✗ Please enter a valid positive number."
             echo
-        fi
+                fi
     done
 }
 
@@ -169,7 +169,8 @@ print_message $BLUE "█▓▒░ LISTING DATABASES SYSTEM ░▒▓█"
 
         if ask_yes_no "Would you like to connect to a database now?"
         then
-            while true; do
+            while true
+            do
                 echo -n "Enter the number of the database to connect (or 'back' to return):"
                 read number
                 if [ "$number" = "back" ]; then

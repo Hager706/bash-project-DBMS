@@ -23,8 +23,6 @@ print_message() {
 
 initialize_dbms() {
 
-
-
    if [ ! -d "$DBMS_HOME" ]; then
         echo "First time running Simple DBMS ;)"
         print_message $GREEN "✓ Created main databases directory: $DBMS_DIR"
@@ -53,5 +51,4 @@ main() {
 
 }
 
-# Start the program
 main "$@"

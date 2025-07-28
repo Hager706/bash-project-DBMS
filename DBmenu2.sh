@@ -1,45 +1,9 @@
 select_from_table() {
+echo
 print_message $BLUE "█▓▒░ SELECT DATA FROM TABLE $1 ░▒▓█"
-local found=0
-local count=1
-declare -a table_names=()
-declare -a columns
-if ! cd "$DBMS_HOME/$1" 2>/dev/null; then
-        print_message $RED "✗ Error: Cannot access database directory"
-        return 1
-fi
-for file in *.meta
-do
-        if [ -f "$file" ]
-        then
-           if [ $found -eq 0 ]; then
-            echo ""
-            print_message $GREEN "Available tables:"
-            #make this because the Available tables: print with every table found
-            fi
-            found=1
-            table_name="${file%.meta}"
-            table_names+=("$table_name")
-            print_message $GREEN "$count. $table_name"
-            ((count++))
-        fi
-       
-done
-
-    if [ $found -eq 0 ]
-    then
-        echo ""
-        print_message $RED "✗ Error: No tables found "
-        echo " "
-        if ask_yes_no "Do you want to create a table?" 
-        then
-            create_table "$1"
-            echo ""
-        fi
-        return
-    fi
-    echo 
-
+echo
+list_tables "$1"
+echo
 while true
 do 
         echo -n "Enter the number of the table to select from:(or 'back' to return): "
@@ -344,42 +308,9 @@ ViewspecCol() {
 delete_from_table() {
 echo
 print_message $BLUE "█▓▒░ DELETE DATA FROM TABLE $1 ░▒▓█"
-local found=0
-local count=1
-declare -a table_names=()
-declare -a columns=()
-    
-    if ! cd "$DBMS_HOME/$1" 2>/dev/null; then
-        print_message $RED "✗ Error: Cannot access database directory"
-        return 1
-    fi
-    
-    for file in *.meta; do
-        if [ -f "$file" ]; then
-            if [ $found -eq 0 ]; then
-                echo ""
-                print_message $GREEN "Available tables:"
-            fi
-            found=1
-            table_name="${file%.meta}"
-            table_names+=("$table_name")
-            print_message $GREEN "$count. $table_name"
-            ((count++))
-        fi
-    done
-
-    if [ $found -eq 0 ]; then
-        echo ""
-        print_message $RED "✗ Error: No tables found"
-        echo ""
-        if ask_yes_no "Do you want to create a table?"; then
-            create_table "$1"
-            echo ""
-            return
-        fi
-        return  
-    fi
-    echo 
+echo
+list_tables "$1"
+echo
 
     while true
     do 
@@ -566,111 +497,14 @@ local data_file="${table_name}.data"
     fi
 }
 
-update_table() {
-    echo
-    print_message $BLUE "█▓▒░ UPDATE DATA FROM TABLE $1 ░▒▓█"
-    local found=0
-    local count=1
-    declare -a table_names=()
-    declare -a columns=()
-    
-    if ! cd "$DBMS_HOME/$1" 2>/dev/null; then
-        print_message $RED "✗ Error: Cannot access database directory"
-        return 1
-    fi
-    
-    for file in *.meta; do
-        if [ -f "$file" ]; then
-            if [ $found -eq 0 ]; then
-                echo ""
-                print_message $GREEN "Available tables:"
-            fi
-            found=1
-            table_name="${file%.meta}"
-            table_names+=("$table_name")
-            print_message $GREEN "$count. $table_name"
-            ((count++))
-        fi
-    done
 
-    if [ $found -eq 0 ]; then
-        echo ""
-        print_message $RED "✗ Error: No tables found"
-        echo ""
-        if ask_yes_no "Do you want to create a table?"; then
-            create_table "$1"
-            echo ""
-            return
-        fi
-        return  
-    fi
-    echo 
-
-    while true
-    do 
-        echo -n "Enter the number of the table to update (or 'back' to return): "
-        read number
-        if [ "$number" = "back" ]; then
-            return
-        fi
-        if ! validate_positive_integer "$number"
-        then
-            print_message $RED "✗ Error: Please enter a valid number"
-            echo ""
-            continue
-        fi 
-
-        if [ "$number" -lt 1 ] || [ "$number" -gt $((count - 1)) ]; then 
-            print_message $RED "✗ Error: Invalid table number"
-            echo ""
-            continue
-        fi 
-        break
-    done
-
-    table_choise="${table_names[$((number-1))]}"
-    
-    UpdateRecord "$table_choise"
-}
 
 update_table() {
     echo
-    print_message $BLUE "█▓▒░ UPDATE DATA FROM TABLE $1 ░▒▓█"
-    local found=0
-    local count=1
-    declare -a table_names=()
-    
-    if ! cd "$DBMS_HOME/$1" 2>/dev/null; then
-        print_message $RED "✗ Error: Cannot access database directory"
-        return 1
-    fi
-    
-    for file in *.meta; do
-        if [ -f "$file" ]; then
-            if [ $found -eq 0 ]; then
-                echo ""
-                print_message $GREEN "Available tables:"
-            fi
-            found=1
-            table_name="${file%.meta}"
-            table_names+=("$table_name")
-            print_message $GREEN "$count. $table_name"
-            ((count++))
-        fi
-    done
-
-    if [ $found -eq 0 ]; then
-        echo ""
-        print_message $RED "✗ Error: No tables found"
-        echo ""
-        if ask_yes_no "Do you want to create a table?"; then
-            create_table "$1"
-            echo ""
-            return
-        fi
-        return  
-    fi
-    echo 
+print_message $BLUE "█▓▒░ UPDATE DATA FROM TABLE $1 ░▒▓█"
+echo
+list_tables "$1"
+echo
 
     while true
     do 
