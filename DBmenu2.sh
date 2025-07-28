@@ -2,8 +2,15 @@ select_from_table() {
 echo
 print_message $BLUE "█▓▒░ SELECT DATA FROM TABLE $1 ░▒▓█"
 echo
+    if ! cd "$DBMS_HOME/$1" 2>/dev/null; then
+        print_message $RED "✗ Error: Cannot access database directory"
+        return 1
+    fi
 list_tables "$1"
 echo
+   if [ ${#table_names[@]} -eq 0 ]; then
+        return
+    fi
 while true
 do 
         echo -n "Enter the number of the table to select from:(or 'back' to return): "
@@ -17,9 +24,9 @@ do
             continue
         fi 
 
-        if [ "$number" -lt 1 ] || [ "$number" -gt $((count - 1)) ]
+        if [ "$number" -lt 1 ] || [ "$number" -gt ${#table_names[@]} ]
         then 
-           print_message $RED "✗ Error:Invalid table number"
+            print_message $RED "✗ Invalid table number (1-${#table_names[@]})"
            echo ""
            continue
         fi 

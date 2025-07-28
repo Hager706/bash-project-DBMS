@@ -3,7 +3,7 @@ while true
 do
 print_message $GREEN ""
 print_message $GREEN "╔══════════════════════════════════════════╗"
-print_message $GREEN"║ ░▒▓█▓▒░      DBMS Main Menu      ░▒▓█▓▒░ ║" 
+print_message $GREEN "║ ░▒▓█▓▒░      DBMS Main Menu      ░▒▓█▓▒░ ║" 
 print_message $GREEN "╚══════════════════════════════════════════╝"
 print_message $GREEN ""
 PS3="Select an option (1-5): "

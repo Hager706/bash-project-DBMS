@@ -247,7 +247,7 @@ print_message $BLUE "█▓▒░ LIST TABLES IN DATABASE SYSTEM ░▒▓█"
         return
     fi
 
-    declare -a table_names=()
+    table_names=()
     for file in "${table_files[@]}"; do
         table_names+=("${file%.meta}")
     done
@@ -259,6 +259,7 @@ print_message $BLUE "█▓▒░ LIST TABLES IN DATABASE SYSTEM ░▒▓█"
         print_message $GREEN "$((i+1)). ${table_names[$i]}"
     done
     echo
+    count=$((${#table_names[@]} + 1))
 }
 
 ######################################drop_table########################################
@@ -267,6 +268,9 @@ drop_table() {
 print_message $BLUE "█▓▒░ DROP TABLES IN DATABASE SYSTEM ░▒▓█"
     echo
 list_tables "$1"
+if [ ${#table_names[@]} -eq 0 ]; then
+        return
+fi
 while true
 do 
         echo -n "Enter the number of the table to drop:(or 'back' to return): "
@@ -280,7 +284,7 @@ do
             continue
         fi 
 
-        if [ "$number" -lt 1 ] || [ "$number" -gt $((count - 1)) ]
+        if [ "$number" -lt 1 ] || [ "$number" -gt ${#table_names[@]} ]
         then 
            print_message $RED " Invalid table number"
            echo ""
@@ -296,19 +300,17 @@ do
 
 
     table_name="${table_names[$((number-1))]}"
-    if ask_yes_no "Are you sure you want to drop table '$table_name'?"
-    then
-            if [ -f "$DBMS_HOME/$1/${table_name}.meta" ]
-            then
-                rm "$DBMS_HOME/$1/${table_name}.meta"
-                print_message $GREEN "✓ Removed metadata file: ${table_name}.meta"
+   if ask_yes_no "Are you sure you want to drop table '$table_name'?"; then
+        if [ -f "$DBMS_HOME/$1/${table_name}.meta" ] && [ -f "$DBMS_HOME/$1/${table_name}.data" ]; then
+            rm "$DBMS_HOME/$1/${table_name}.meta" "$DBMS_HOME/$1/${table_name}.data"
+            if [ $? -eq 0 ]; then
+                print_message $GREEN "✓ Table '$table_name' dropped successfully!"
+            else
+                print_message $RED "✗ Error: Failed to drop table '$table_name'"
             fi
-            if [ -f "$DBMS_HOME/$1/${table_name}.data" ]; then
-                rm "$DBMS_HOME/$1/${table_name}.data"
-                print_message $GREEN "✓ Removed data file: ${table_name}.data"
-            fi
-            print_message $GREEN "✓ Table '$table_name' dropped successfully!"
-
+        else
+            print_message $RED "✗ Error: Table files not found or corrupted"
+        fi
     else
         print_message $YELLOW "Drop operation cancelled."
         echo
@@ -318,136 +320,110 @@ do
 ###################################insert_into_table#######################################
 
 insert_into_table() {
-print_message $BLUE "Insert Data in Tables in Database: $1"
-local found=0
-local count=1
-declare -a table_names=()
-declare -a columns
-declare -a data_types
-declare -a constraints
-declare -a values
-for file in *.meta
-do
-        if [ -f "$file" ]
-        then
-           if [ $found -eq 0 ]; then
-            echo ""
-            print_message $GREEN "Available tables:"
-        
-            fi
-            found=1
-            table_name="${file%.meta}"
-            table_names+=("$table_name")
-            print_message $GREEN "$count. $table_name"
-            ((count++))
-        fi
-       
-done
-
-    if [ $found -eq 0 ]
-    then
-        echo ""
-        print_message $RED " No tables found "
-        echo " "
-        if ask_yes_no "Do you want to create a table?" 
-        then
-            create_table "$1"
-            echo ""
-            return
-        fi
-        DBmenu $1
+    echo
+    print_message $BLUE "█▓▒░ INSERT DATA INTO TABLE ░▒▓█"
+    echo
+    
+    if ! cd "$DBMS_HOME/$1" 2>/dev/null; then
+        print_message $RED "✗ Error: Cannot access database directory"
+        return 1
+    fi
+    
+    list_tables "$1"
+    
+    if [ ${#table_names[@]} -eq 0 ]; then
         return
     fi
-    echo 
 
-while true
-do 
-        echo -n "Enter the number of the table to insert into:(or 'back' to return): "
+    while true; do 
+        echo -n "Enter the number of the table to insert into (or 'back' to return): "
         read number
         if [ "$number" = "back" ]; then
             return
         fi
-        if ! validate_positive_integer "$number"
-        then
+        
+        if ! validate_positive_integer "$number"; then
             echo ""
             continue
         fi 
 
-        if [ "$number" -lt 1 ] || [ "$number" -gt $((count - 1)) ]
-        then 
-           print_message $RED " Invalid table number"
-           echo ""
-           continue
+        if [ "$number" -lt 1 ] || [ "$number" -gt ${#table_names[@]} ]; then 
+            print_message $RED "✗ Invalid table number (1-${#table_names[@]})"
+            echo ""
+            continue
         fi 
         break
     done
-table_name="${table_names[$((number-1))]}"
-
-while IFS=':' read -r  colName dataType const 
-do
-columns+=("$colName")
-data_types+=("$dataType")
-constraints+=("$const")
-
-done  < "$DBMS_HOME/$1/${table_name}.meta" 
-while true
-do
-values=()
-for (( i=0 ; i<${#columns[@]} ; i++))
-do 
-  while true
-  do 
-     constraint_text=""
-     if [[ "$constraints[$i]" == "PRIMARY_KEY" ]]
-     then
-        constraint_text=" (PRIMARY KEY)"
-     fi
-     echo -n "Enter value for ${columns[$i]} (${data_types[$i]}$constraint_text):"
-     read value
-
-
-     if ! validate_column_value "$value" "${data_types[$i]}"
-     then
-        echo ""
-        continue
-     fi
-
-     if [[ "${constraints[$i]}" == "PRIMARY_KEY" ]] && ! validate_primary_key_unique "$table_name" "$value"
-     then
-                echo ""
-                continue
-     fi
-     values+=("$value")
-
-     break
-
-  done 
-
-done 
-    record=$(IFS=':'; echo "${values[*]}")
-    echo "$record" >> "$DBMS_HOME/$1/${table_name}.data"
     
-    print_message $GREEN "✓ Record inserted successfully!"
-    echo
-    print_message $YELLOW "Inserted record:"
-    echo "+----------------------+----------------------+"
-    printf "| %-20s | %-20s |\n" "Column Name" "Value"
-    echo "+----------------------+----------------------+"
+    table_name="${table_names[$((number-1))]}"
+    
+    declare -a columns=()
+    declare -a data_types=()
+    declare -a constraints=()
+    
+    while IFS=':' read -r colName dataType const; do
+        if [ -n "$colName" ]; then  
+            columns+=("$colName")
+            data_types+=("$dataType")
+            constraints+=("$const")
+        fi
+    done < "$DBMS_HOME/$1/${table_name}.meta" 
+    
+    while true; do
+        declare -a values=()
+        
+        for (( i=0; i<${#columns[@]}; i++ )); do 
+            while true; do 
+                constraint_text=""
+                if [[ "${constraints[$i]}" == "PRIMARY_KEY" ]]; then
+                    constraint_text=" (PRIMARY KEY)"
+                fi
+                
+                echo -n "Enter value for ${columns[$i]} (${data_types[$i]}$constraint_text): "
+                read value
 
-    for (( i = 0; i < ${#columns[@]}; i++ )); do
-    printf "| %-20s | %-20s |\n" "${columns[$i]}" "${values[$i]}" 
+                if ! validate_column_value "$value" "${data_types[$i]}"; then
+                    echo ""
+                    continue
+                fi
+
+                if [[ "${constraints[$i]}" == "PRIMARY_KEY" ]] && ! validate_primary_key_unique "$table_name" "$value"; then
+                    echo ""
+                    continue
+                fi
+                
+                values+=("$value")
+                break
+            done 
+        done 
+        
+        record=$(IFS=':'; echo "${values[*]}")
+        echo "$record" >> "$DBMS_HOME/$1/${table_name}.data"
+        
+        if [ $? -eq 0 ]; then
+            print_message $GREEN "✓ Record inserted successfully!"
+            echo
+            print_message $YELLOW "Inserted record:"
+            echo "+----------------------+----------------------+"
+            printf "| %-20s | %-20s |\n" "Column Name" "Value"
+            echo "+----------------------+----------------------+"
+
+            for (( i = 0; i < ${#columns[@]}; i++ )); do
+                printf "| %-20s | %-20s |\n" "${columns[$i]}" "${values[$i]}" 
+            done
+
+            echo "+----------------------+----------------------+"
+        else
+            print_message $RED "✗ Error: Failed to insert record"
+        fi
+
+        echo
+        if ! ask_yes_no "Do you want to insert another record into '$table_name'?"; then
+            break
+        fi
     done
+    echo ""
 
-    echo "+----------------------+----------------------+"
-
-    echo
-if ! ask_yes_no "Do you want to insert another record into '$table_name'?"
-then
-    break
-fi
-done
-echo ""
-DBmenu "$1"
 # 1. Show available tables √
 # 2. Let user select a table √
 # 3. Read table structure from .meta file √

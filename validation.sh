@@ -231,17 +231,17 @@ validate_column_unique() {
 }
 
 validate_primary_key_unique() {
-    #1>>> table name
-    #2>>> pk
-    #local pk_value="$2"
+    local table_name="$1"
+    local pk_value="$2"
+    local data_file="${table_name}.data"
     
-    if [ -f "${1}.data" ] 
-    then
-        if tail -n +2 "${1}.data" | cut -d: -f1 | grep -qx "$2"
-        then
-        print_message $RED "✗ Error: Primary key '$2' already exists in table '$1'!"
+    if [ ! -f "$data_file" ]; then
+        return 0  
+    fi
+    
+    if tail -n +2 "$data_file" 2>/dev/null | cut -d: -f1 | grep -qx "$pk_value"; then
+        print_message $RED "✗ Error: Primary key '$pk_value' already exists in table '$table_name'!"
         return 1
-        fi
     fi
     
     return 0
@@ -255,7 +255,7 @@ ask_yes_no() {
     do
         echo -n "$question (Y/n): " 
         read answer
-        
+
         case "$answer" in
             [Yy]|[Yy][Ee][Ss])
                 return 0 
