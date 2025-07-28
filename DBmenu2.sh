@@ -399,7 +399,7 @@ local data_file="${table_name}.data"
     
     echo
     print_message $BLUE "Current table data:"
-    Viewall "$table"
+    Viewall "$table_name"
     echo
     
     local primary_key=$(head -n 1 "$data_file" | cut -d':' -f1)
