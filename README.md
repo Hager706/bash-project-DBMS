@@ -88,18 +88,20 @@ DBMS Project Structure:
 ./main.sh
 
 # 2. Create database "company"
-
+![Alt text](assets/pic1.png)
 
 # 3. Connect to database
 
+![Alt text](assets/pic2.png)
 
 # 4. Create employees table
+![Alt text](assets/pic3.png)
 
 # 5. Insert employee record
-
+![Alt text](assets/pic4.png)
 
 # 6. View all records
-
+![Alt text](assets/pic.png)
 
 ## 📊 Data Types
 
