@@ -1,6 +1,4 @@
 ---
-
-```markdown
 # Simple Bash-Based Database Management System (DBMS)
 
 A command-line interface (CLI) based DBMS implemented in Bash scripting language.  
