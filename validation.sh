@@ -191,30 +191,6 @@ validate_string() {
     
     return 0
 }
-###########################################Function to get valid input from user######################################################################
-get_valid_input() {
-    local prompt="$1"
-    local validation_function="$2"
-    local input
-    
-    while true; do
-        echo -n "$prompt: "
-        read input
-        
-        if [ -z "$validation_function" ]; then
-            echo "$input"
-            return 0
-        fi
-        
-        if $validation_function "$input"; then
-            echo "$input"
-            return 0
-        fi
-        print_message $RED "✗ Error:Please try again."
-        echo ""
-    done
-}
-
 
 ###########################################Function to get valid unique######################################################################
 
@@ -272,74 +248,66 @@ ask_yes_no() {
 
 ###########################################Additional helper functions######################################################################
 
-# Function to check if a file is readable and not empty
-validate_file_readable() {
-    local file="$1"
+# # Function to check if a file is readable and not empty
+# validate_file_readable() {
+#     local file="$1"
     
-    if [ ! -f "$file" ]; then
-        print_message $RED "✗ Error: File '$file' does not exist!"
-        return 1
-    fi
+#     if [ ! -f "$file" ]; then
+#         print_message $RED "✗ Error: File '$file' does not exist!"
+#         return 1
+#     fi
     
-    if [ ! -r "$file" ]; then
-        print_message $RED "✗ Error: File '$file' is not readable!"
-        return 1
-    fi
+#     if [ ! -r "$file" ]; then
+#         print_message $RED "✗ Error: File '$file' is not readable!"
+#         return 1
+#     fi
     
-    return 0
-}
+#     return 0
+# }
 
-# Function to validate table structure integrity
-validate_table_structure() {
-    local table_name="$1"
-    local meta_file="${table_name}.meta"
-    local data_file="${table_name}.data"
+# # Function to validate table structure integrity
+# validate_table_structure() {
+#     local table_name="$1"
+#     local meta_file="${table_name}.meta"
+#     local data_file="${table_name}.data"
     
-    # Check if both files exist
-    if ! validate_file_readable "$meta_file"; then
-        return 1
-    fi
+#     # Check if both files exist
+#     if ! validate_file_readable "$meta_file"; then
+#         return 1
+#     fi
     
-    if ! validate_file_readable "$data_file"; then
-        return 1
-    fi
+#     if ! validate_file_readable "$data_file"; then
+#         return 1
+#     fi
     
-    # Count columns in meta file
-    local meta_columns=$(wc -l < "$meta_file")
+#     # Count columns in meta file
+#     local meta_columns=$(wc -l < "$meta_file")
     
-    # Count columns in data file header
-    local data_columns=$(head -n 1 "$data_file" | tr ':' '\n' | wc -l)
+#     # Count columns in data file header
+#     local data_columns=$(head -n 1 "$data_file" | tr ':' '\n' | wc -l)
     
-    if [ "$meta_columns" -ne "$data_columns" ]; then
-        print_message $RED "✗ Error: Table structure mismatch! Meta: $meta_columns columns, Data: $data_columns columns"
-        return 1
-    fi
+#     if [ "$meta_columns" -ne "$data_columns" ]; then
+#         print_message $RED "✗ Error: Table structure mismatch! Meta: $meta_columns columns, Data: $data_columns columns"
+#         return 1
+#     fi
     
-    return 0
-}
+#     return 0
+# }
 
 
-# Function to check if directory is writable
-validate_directory_writable() {
-    local dir="$1"
+# # Function to check if directory is writable
+# validate_directory_writable() {
+#     local dir="$1"
     
-    if [ ! -d "$dir" ]; then
-        print_message $RED "✗ Error: Directory '$dir' does not exist!"
-        return 1
-    fi
+#     if [ ! -d "$dir" ]; then
+#         print_message $RED "✗ Error: Directory '$dir' does not exist!"
+#         return 1
+#     fi
     
-    if [ ! -w "$dir" ]; then
-        print_message $RED "✗ Error: Directory '$dir' is not writable!"
-        return 1
-    fi
+#     if [ ! -w "$dir" ]; then
+#         print_message $RED "✗ Error: Directory '$dir' is not writable!"
+#         return 1
+#     fi
     
-    return 0
-}
-
-# Function to sanitize input for file operations
-sanitize_input() {
-    local input="$1"
-    
-    # Remove potentially dangerous characters
-    echo "$input" | sed 's/[^a-zA-Z0-9_-]//g'
-}
+#     return 0
+# }
