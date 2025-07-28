@@ -38,9 +38,9 @@ validate_string_data() {
         print_message $RED "✗ Error: Name cannot start with a number!"
         return 1
     fi
-    if [[ "$1" =~ [\;\|\$\`\\] ]]; then
+    if [[ "$1" =~ [\;\|\$\`\\:] ]]; then
         print_message $RED "✗ Error: String data contains dangerous characters!"
-        echo "       Characters not allowed: ; | & \$ \` \\"
+        echo "       Characters not allowed: ; | & \$ \` \\ :"
         return 1
     fi
     

@@ -1,6 +1,10 @@
 CURRENT_DB=""
+declare -a table_names=() 
 DBmenu() {
-    
+if ! cd "$DBMS_HOME/$db_name" 2>/dev/null; then
+        print_message $RED "✗ Error: Cannot access database directory"
+        return 1
+fi
 while true
 do
 print_message $BLUE""
@@ -45,7 +49,7 @@ print_message $BLUE ""
                     print_message $YELLOW "Disconnecting from database: $1"
                     CURRENT_DB=""
 		        	echo
-		           show_main_menu
+		           return
                     ;;
                     "Exit")
               print_message $GREEN "Goodbye! Thank you for using our DBMS."
@@ -233,7 +237,7 @@ print_message $BLUE "█▓▒░ LIST TABLES IN DATABASE SYSTEM ░▒▓█"
         print_message $RED "✗ Error: Cannot access database directory"
         return 1
     fi
-
+    table_names=()
     local table_files=($(ls *.meta 2>/dev/null))
     
     if [ ${#table_files[@]} -eq 0 ]; then
@@ -247,7 +251,6 @@ print_message $BLUE "█▓▒░ LIST TABLES IN DATABASE SYSTEM ░▒▓█"
         return
     fi
 
-    table_names=()
     for file in "${table_files[@]}"; do
         table_names+=("${file%.meta}")
     done
@@ -293,13 +296,18 @@ do
          
         break
     done
-    show_created_table_structure "$table_name"
+ 
+  local table_name="${table_names[$((number-1))]}"
+    
+    if [ -f "${table_name}.meta" ]; then
+        show_created_table_structure "$table_name"
+    fi
+
     echo
     print_message $RED "⚠️  WARNING: This action will permanently delete the table and ALL its data!"
     echo
 
 
-    table_name="${table_names[$((number-1))]}"
    if ask_yes_no "Are you sure you want to drop table '$table_name'?"; then
         if [ -f "$DBMS_HOME/$1/${table_name}.meta" ] && [ -f "$DBMS_HOME/$1/${table_name}.data" ]; then
             rm "$DBMS_HOME/$1/${table_name}.meta" "$DBMS_HOME/$1/${table_name}.data"
